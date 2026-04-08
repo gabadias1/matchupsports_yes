@@ -5,7 +5,7 @@
 O **Match Up Sports YES** é um aplicativo móvel desenvolvido para facilitar o aluguel de quadras esportivas, como futebol, vôlei e basquete.
 
 A plataforma conecta **donos de quadras** com **jogadores**, oferecendo uma forma simples, rápida e eficiente de reservar horários ou até mesmo encontrar novas pessoas para jogar.
-
+ 
 ---
 
 ## 🎯 Funcionalidades
