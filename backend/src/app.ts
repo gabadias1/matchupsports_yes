@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
-import userRoutes from "./routes/userRoutes";
+import usuarioRoutes from "./routes/usuarioRoutes";
+import quadraRoutes from "./routes/quadraRoutes";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./config/swagger";
 
@@ -12,7 +13,8 @@ app.use(express.json());
 // Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.use("/users", userRoutes);
+app.use("/usuarios", usuarioRoutes);
+app.use("/quadras", quadraRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend rodando! 🚀");

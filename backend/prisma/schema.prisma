@@ -13,8 +13,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model Usuario {
   id    Int     @id @default(autoincrement())
-  name  String
+  nome  String
   email String  @unique
+  senha String
+  tipo Int
+  quadras Quadra[]
+}
+
+model Quadra {
+  id    Int     @id @default(autoincrement())
+  localizacao String // pode ser discutido depois
+  descricao String
+  usuario Usuario @relation(fields: [idUsuario], references:[id])
+  idUsuario Int
 }
