@@ -19,13 +19,22 @@ model Usuario {
   email String  @unique
   senha String
   tipo Int
+  estabelecimentos Estabelecimento[]
+}
+
+model Estabelecimento {
+  id    Int     @id @default(autoincrement())
+  proprietario Usuario @relation(fields: [proprietario_id], references:[id])
+  proprietario_id Int
+  nome_local String
+  endereco String
   quadras Quadra[]
 }
 
 model Quadra {
   id    Int     @id @default(autoincrement())
-  localizacao String // pode ser discutido depois
   descricao String
-  usuario Usuario @relation(fields: [idUsuario], references:[id])
-  idUsuario Int
+  identificacao String
+  estabelecimento Estabelecimento @relation(fields: [estabelecimento_id], references:[id])
+  estabelecimento_id Int
 }

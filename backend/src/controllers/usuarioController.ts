@@ -37,7 +37,7 @@ export const deleteUsuario = async (req: Request, res: Response) => {
       where: { id: Number(req.params.id) }
     });
 
-    res.json({ message: "Usuário deletado com sucesso" });
+    return res.status(204).send();
   } catch {
     return res.status(404).json({ message: "Usuário não encontrado" });
   }

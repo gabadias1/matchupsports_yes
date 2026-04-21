@@ -16,24 +16,24 @@ const router = Router();
  *           schema:
  *             type: object
  *             required:
- *               - localizacao
+ *               - identificacao
  *               - descricao
- *               - idUsuario
+ *               - estabelecimento_id
  *             properties:
- *               localizacao:
+ *               identificacao:
  *                 type: string
- *                 example: Rua A, 123
+ *                 example: Quadra 1
  *               descricao:
  *                 type: string
  *                 example: Quadra de futebol society
- *               idUsuario:
+ *               estabelecimento_id:
  *                 type: integer
  *                 example: 1
  *     responses:
  *       200:
  *         description: Quadra criada com sucesso
  *       404:
- *         description: Usuário não encontrado
+ *         description: Estabelecimento não encontrado
  */
 router.post("/", createQuadra);
 
@@ -45,7 +45,7 @@ router.post("/", createQuadra);
  *     tags: [Quadras]
  *     responses:
  *       200:
- *         description: Quadras retornadas com sucesso
+ *         description: Lista de quadras retornada com sucesso
  */
 router.get("/", getQuadras);
 
@@ -92,20 +92,20 @@ router.get("/:id", getQuadra);
  *           schema:
  *             type: object
  *             properties:
- *               localizacao:
+ *               identificacao:
  *                 type: string
- *                 example: Rua B, 456
+ *                 example: Quadra 2
  *               descricao:
  *                 type: string
- *                 example: Quadra poliesportiva
- *               idUsuario:
+ *                 example: Quadra reformada
+ *               estabelecimento_id:
  *                 type: integer
  *                 example: 2
  *     responses:
  *       200:
  *         description: Quadra atualizada com sucesso
  *       404:
- *         description: Quadra ou usuário não encontrado
+ *         description: Quadra ou estabelecimento não encontrado
  */
 router.put("/:id", updateQuadra);
 
@@ -124,7 +124,7 @@ router.put("/:id", updateQuadra);
  *           type: integer
  *           example: 1
  *     responses:
- *       200:
+ *       204:
  *         description: Quadra deletada com sucesso
  *       404:
  *         description: Quadra não encontrada

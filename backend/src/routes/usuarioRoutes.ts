@@ -137,7 +137,7 @@ router.put("/:id", updateUsuario);
  *           type: integer
  *           example: 1
  *     responses:
- *       200:
+ *       204:
  *         description: Usuário deletado com sucesso
  *       404:
  *         description: Usuário não encontrado

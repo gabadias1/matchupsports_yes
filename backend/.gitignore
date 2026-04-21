@@ -43,9 +43,6 @@ temp/
 # Cache
 .cache/
 
-# Prisma (se usar)
-prisma/migrations/
-
 # Uploads / arquivos gerados
 uploads/
 /src/generated/prisma
