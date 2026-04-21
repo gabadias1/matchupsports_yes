@@ -36,6 +36,8 @@ const router = Router();
  *     responses:
  *       200:
  *         description: Usuário criado com sucesso
+ *       400:
+ *         description: E-mail já cadastrado
  *       500:
  *         description: Erro interno
  */
@@ -115,6 +117,8 @@ router.get("/", getUsuarios);
  *     responses:
  *       200:
  *         description: Usuário atualizado com sucesso
+ *       400:
+ *         description: E-mail em uso por outro usuário
  *       404:
  *         description: Usuário não encontrado
  *       500:
