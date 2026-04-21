@@ -65,3 +65,46 @@ Este projeto foi desenvolvido para:
 * Aplicar conhecimentos em desenvolvimento de software
 
 ---
+
+## 🚀 Backend - Instalação e Execução
+
+### 📋 Pré-requisitos
+
+Antes de começar, você precisa ter instalado:
+
+* Node.js (versão 18+)
+* Docker
+* Docker Compose
+
+---
+
+### ⚙️ Configuração de ambiente
+
+Crie um arquivo ```.env``` na raiz do backend:
+
+```
+DATABASE_URL=postgresql://postgres:postgres@postgres:5432/mydb
+PORT=3000
+```
+
+---
+
+### 🐳 Subindo o projeto com Docker
+
+Dentro do diretório backend execute:
+
+```
+docker compose up --build
+```
+
+Após isso, o servidor backend estará disponível em:
+
+```
+http://localhost:3000
+```
+
+O swagger para documentação estará disponível em:
+
+```
+http://localhost:3000/api-docs
+```
