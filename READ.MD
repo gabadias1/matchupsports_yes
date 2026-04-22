@@ -2,7 +2,7 @@
 
 ## 📌 Sobre
 
-Aplicativo para aluguel de quadras esportivas com sistema de match entre jogadores.
+Aplicativo para aluguel de quadras esportivas com sistema de match entre jogadores..
 
 ---
 
