@@ -1,0 +1,19 @@
+# Backend
+backend/node_modules/
+backend/.env
+
+# Database
+database/node_modules/
+database/.env
+
+# Flutter
+frontend/.dart_tool/
+frontend/build/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+
+# VSCode
+.vscode/
+
+# Sistema
+.DS_Store
