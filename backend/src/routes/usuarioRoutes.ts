@@ -1,47 +1,9 @@
 import { Router } from "express";
-import { createUsuario, updateUsuario, deleteUsuario, getUsuario, getUsuarios } from "../controllers/usuarioController";
+import { updateUsuario, deleteUsuario, getUsuario, getUsuarios } from "../controllers/usuarioController";
 
 const router = Router();
 
-/**
- * @swagger
- * /usuarios:
- *   post:
- *     summary: Cria um novo usuário
- *     tags: [Usuarios]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - nome
- *               - email
- *               - senha
- *               - tipo
- *             properties:
- *               nome:
- *                 type: string
- *                 example: João Silva
- *               email:
- *                 type: string
- *                 example: joao@email.com
- *               senha:
- *                  type: string
- *                  example: senha123
- *               tipo:
- *                  type: integer
- *                  example: 0
- *     responses:
- *       200:
- *         description: Usuário criado com sucesso
- *       400:
- *         description: E-mail já cadastrado
- *       500:
- *         description: Erro interno
- */
-router.post("/", createUsuario);
+// post /usuarios foi para autenticacaoRoutes.ts
 
 /**
  * @swagger
@@ -108,6 +70,9 @@ router.get("/", getUsuarios);
  *               email:
  *                 type: string
  *                 example: joao@email.com
+ *               celular:
+ *                 type: string
+ *                 example: 11999999999
  *               senha:
  *                  type: string
  *                  example: senha123

@@ -1,21 +1,11 @@
 import { Request, Response } from "express";
+import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma";
 
-export const createUsuario = async (req: Request, res: Response) => {
-  const { nome, email, senha, tipo } = req.body;
-
-  try {
-    const usuario = await prisma.usuario.create({
-      data: { nome, email, senha, tipo }
-    });
-    return res.json(usuario);
-  } catch {
-    return res.status(400).json({ message: "E-mail já cadastrado" });
-  }
-};
+// create usuário foi para autenticacaoController.ts
 
 export const updateUsuario = async (req: Request, res: Response) => {
-  const { nome, email, senha, tipo } = req.body;
+  const { nome, email, celular, senha, tipo } = req.body;
 
   try {
     await prisma.usuario.findUniqueOrThrow({
@@ -25,10 +15,11 @@ export const updateUsuario = async (req: Request, res: Response) => {
     return res.status(404).json({ message: "Usuário não encontrado" });
   }
   
+  const hashedSenha = await bcrypt.hash(senha, 10);
   try {
     const usuario = await prisma.usuario.update({
       where: { id: Number(req.params.id) },
-      data: { nome, email, senha, tipo }
+      data: { nome, email, celular, senha: hashedSenha, tipo }
     });
     return res.json(usuario);
   } catch {

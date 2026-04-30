@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:match_up_sports/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/widgets/app_widgets.dart';
  
@@ -422,6 +423,13 @@ class _ReservasTab extends StatelessWidget {
  
 // ── Aba Perfil ────────────────────────────────────────────────────────────────
 class _PerfilTab extends StatelessWidget {
+  final _authService = AuthService();
+
+  void _logout(BuildContext context) async {
+    await _authService.logout();
+    context.go(AppRoutes.login);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -444,7 +452,7 @@ class _PerfilTab extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: OutlinedButton.icon(
-              onPressed: () => context.go(AppRoutes.login),
+              onPressed: () => _logout(context),
               icon: const Icon(Icons.logout, size: 18),
               label: const Text('Sair da conta'),
               style: OutlinedButton.styleFrom(
