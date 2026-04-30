@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/routes/app_router.dart';
+import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/widgets/app_widgets.dart';
 
@@ -18,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  final _authService = AuthService();
 
   @override
   void dispose() {
@@ -31,13 +33,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    // Simulação de login (integrar com API futuramente)
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (mounted) {
+    try {
+      await _authService.login(_emailController.text, _passwordController.text);
       setState(() => _isLoading = false);
       context.go(AppRoutes.home);
+    } on String catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e)),
+      );
+      return;
     }
+
+
   }
 
   @override

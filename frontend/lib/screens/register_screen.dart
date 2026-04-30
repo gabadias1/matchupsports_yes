@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/routes/app_router.dart';
+import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/widgets/app_widgets.dart';
 
@@ -19,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
 
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
@@ -41,11 +43,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
 
-    if (mounted) {
+    try {
+      var user = await _authService.cadastrar(
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+        _passwordController.text,
+        _phoneController.text.trim(),
+        _selectedProfile,
+      );
+      await _authService.login(_emailController.text, _passwordController.text);
       setState(() => _isLoading = false);
       context.go(AppRoutes.home);
+    } on String catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e)),
+      );
+      return;
     }
   }
 

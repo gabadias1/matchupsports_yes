@@ -1,20 +1,42 @@
-import swaggerJSDoc from "swagger-jsdoc";
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
+import { Express } from "express";
 
-const options: swaggerJSDoc.Options = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "API Matchup Sports",
-      version: "1.0.0",
-      description: "Documentação da API",
-    },
-    servers: [
-      {
-        url: "http://localhost:3000",
+export function setupSwagger(app: Express) {
+  const options = {
+    definition: {
+      openapi: "3.0.0",
+      info: {
+        title: "Minha API",
+        version: "1.0.0",
+        description: "Documentação da API",
       },
-    ],
-  },
-  apis: ["./src/routes/*.ts"], // onde ficam as rotas
-};
 
-export const swaggerSpec = swaggerJSDoc(options);
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+          },
+        },
+      },
+
+      security: [
+        {
+          bearerAuth: [],
+        },
+      ],
+    },
+
+    apis: ["./src/routes/*.ts"],
+  };
+
+  const specs = swaggerJsdoc(options);
+
+  app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(specs)
+  );
+}

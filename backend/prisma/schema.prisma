@@ -17,6 +17,7 @@ model Usuario {
   id    Int     @id @default(autoincrement())
   nome  String
   email String  @unique
+  celular String
   senha String
   tipo Int
   estabelecimentos Estabelecimento[]
