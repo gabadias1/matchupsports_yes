@@ -18,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentTab = 0;
   String _selectedSport = 'Todos';
+  double? _maxPrice;
   List<Map<String, dynamic>> _courts = [];
   bool _isLoading = true;
 
@@ -34,11 +35,14 @@ class _HomeScreenState extends State<HomeScreen> {
         _courts = quadras
             .map((q) => {
                   'name': q.identificacao,
-                  'sport': 'Futebol',
+                  'sport': q.esporte ?? 'Futebol',
                   'location': q.descricao,
                   'distance': '',
-                  'price': '—',
+                  'price': q.valorHora != null
+                      ? 'R\$ ${q.valorHora!.toStringAsFixed(2)}/h'
+                      : '—',
                   'available': true,
+                  'valor': q.valorHora ?? 0.0,
                 })
             .toList();
         _isLoading = false;
@@ -49,8 +53,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<Map<String, dynamic>> get _filteredCourts {
-    if (_selectedSport == 'Todos') return _courts;
-    return _courts.where((c) => c['sport'] == _selectedSport).toList();
+    var filtered = _courts;
+    
+    if (_selectedSport != 'Todos') {
+      filtered = filtered.where((c) => c['sport'] == _selectedSport).toList();
+    }
+    
+    if (_maxPrice != null) {
+      filtered = filtered
+          .where((c) => ((c['valor'] as double?) ?? 0.0) <= _maxPrice!)
+          .toList();
+    }
+    
+    return filtered;
   }
 
   @override
@@ -62,9 +77,12 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _HomeTab(
               selectedSport: _selectedSport,
+              maxPrice: _maxPrice,
               filteredCourts: _filteredCourts,
               onSportSelected: (sport) =>
                   setState(() => _selectedSport = sport),
+              onPriceChanged: (price) =>
+                  setState(() => _maxPrice = price),
               isLoading: _isLoading,
             ),
             _MatchTab(),
@@ -122,19 +140,29 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // ── Aba Home ─────────────────────────────────────────────────────────────────
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends StatefulWidget {
   final String selectedSport;
+  final double? maxPrice;
   final List<Map<String, dynamic>> filteredCourts;
   final Function(String) onSportSelected;
+  final Function(double?) onPriceChanged;
   final bool isLoading;
 
   const _HomeTab({
     required this.selectedSport,
+    required this.maxPrice,
     required this.filteredCourts,
     required this.onSportSelected,
+    required this.onPriceChanged,
     required this.isLoading,
   });
 
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  bool isLoading = false;
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -282,11 +310,58 @@ class _HomeTab extends StatelessWidget {
                             child: SportChip(
                               label: sport,
                               emoji: _sportEmoji(sport),
-                              isSelected: selectedSport == sport,
-                              onTap: () => onSportSelected(sport),
+                              isSelected: widget.selectedSport == sport,
+                              onTap: () => widget.onSportSelected(sport),
                             ),
                           ))
                       .toList(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Filtro de Preço',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                        if (widget.maxPrice != null)
+                          GestureDetector(
+                            onTap: () => widget.onPriceChanged(null),
+                            child: Text(
+                              'Limpar',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 12,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Slider(
+                      value: widget.maxPrice ?? 200,
+                      min: 10,
+                      max: 200,
+                      divisions: 38,
+                      label: 'R\$ ${(widget.maxPrice ?? 200).toStringAsFixed(0)}',
+                      activeColor: AppColors.primary,
+                      inactiveColor: AppColors.grayLight,
+                      onChanged: (value) {
+                        widget.onPriceChanged(value);
+                      },
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
@@ -304,7 +379,7 @@ class _HomeTab extends StatelessWidget {
                     ),
                   ),
                 )
-              : filteredCourts.isEmpty
+              : widget.filteredCourts.isEmpty
                   ? SliverToBoxAdapter(
                       child: Center(
                         child: Padding(
@@ -328,7 +403,7 @@ class _HomeTab extends StatelessWidget {
                   : SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          final court = filteredCourts[index];
+                          final court = widget.filteredCourts[index];
                           return CourtCard(
                             name: court['name'],
                             sport: court['sport'],
@@ -338,7 +413,7 @@ class _HomeTab extends StatelessWidget {
                             isAvailable: court['available'],
                           );
                         },
-                        childCount: filteredCourts.length,
+                        childCount: widget.filteredCourts.length,
                       ),
                     ),
         ),

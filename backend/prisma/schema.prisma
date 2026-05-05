@@ -37,6 +37,8 @@ model Quadra {
   id                 Int             @id @default(autoincrement())
   descricao          String
   identificacao      String
+  esporte            String?         @default("Futebol")
+  valor_hora         Float?
   estabelecimento    Estabelecimento @relation(fields: [estabelecimento_id], references: [id])
   estabelecimento_id Int
   dono               Usuario         @relation(fields: [dono_id], references: [id]) 

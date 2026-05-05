@@ -15,14 +15,17 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final token = response.data['token'];
+        final tipo = response.data['usuario']['tipo'];
         await _saveToken(token);
+        await _saveTipo(tipo);
         final usuario = Usuario(
           id: response.data['usuario']['id'],
           nome: response.data['usuario']['nome'],
           email: response.data['usuario']['email'],
           celular: response.data['usuario']['celular'],
+          tipo: tipo,
         );
-        return response.data['usuario']['tipo'];
+        return tipo;
       } else {
         return null;
       }
@@ -64,6 +67,7 @@ class AuthService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    await prefs.remove('user_tipo');
   }
 
   Future<void> _saveToken(String token) async {
@@ -74,5 +78,15 @@ class AuthService {
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('auth_token');
+  }
+
+  Future<void> _saveTipo(int tipo) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('user_tipo', tipo);
+  }
+
+  Future<int?> getTipo() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('user_tipo');
   }
 }

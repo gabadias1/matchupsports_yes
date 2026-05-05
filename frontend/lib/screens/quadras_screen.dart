@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/models/quadra.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
+import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
+import 'package:match_up_sports/routes/app_router.dart';
 
 class QuadrasScreen extends StatefulWidget {
   const QuadrasScreen({super.key});
@@ -13,17 +16,37 @@ class QuadrasScreen extends StatefulWidget {
 
 class _QuadrasScreenState extends State<QuadrasScreen> {
   late Future<List<QuadraModel>> _futureQuadras;
+  final _authService = AuthService();
+  int? _userType;
 
   @override
   void initState() {
     super.initState();
     _futureQuadras = QuadraService.getQuadras();
+    _loadUserType();
+  }
+
+  Future<void> _loadUserType() async {
+    final tipo = await _authService.getTipo();
+    setState(() => _userType = tipo);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Quadras disponíveis')),
+      appBar: AppBar(
+        title: Text(
+          'Quadras disponíveis',
+          style: GoogleFonts.dmSans(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: FutureBuilder<List<QuadraModel>>(
         future: _futureQuadras,
         builder: (context, snapshot) {
@@ -69,6 +92,8 @@ class _QuadrasScreenState extends State<QuadrasScreen> {
             itemCount: quadras.length,
             itemBuilder: (context, index) {
               final q = quadras[index];
+              final emoji = _getEsporteEmoji(q.esporte);
+              
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
@@ -86,8 +111,8 @@ class _QuadrasScreenState extends State<QuadrasScreen> {
                         color: AppColors.primaryLight,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Center(
-                        child: Text('🏟️', style: TextStyle(fontSize: 26)),
+                      child: Center(
+                        child: Text(emoji, style: const TextStyle(fontSize: 26)),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -104,12 +129,37 @@ class _QuadrasScreenState extends State<QuadrasScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                q.esporte ?? 'Futebol',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              if (q.valorHora != null)
+                                Text(
+                                  'R\$ ${q.valorHora!.toStringAsFixed(2)}/h',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
                           Text(
                             q.descricao,
                             style: GoogleFonts.dmSans(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: AppColors.gray,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -126,6 +176,33 @@ class _QuadrasScreenState extends State<QuadrasScreen> {
           );
         },
       ),
-    );
+      floatingActionButton: _userType == 1
+          ? FloatingActionButton.extended(
+              onPressed: () => context.push(AppRoutes.criarQuadra),
+              backgroundColor: AppColors.primary,
+              label: Text(
+                'Nova Quadra',
+                style: GoogleFonts.dmSans(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              icon: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
+    ); 
+  } 
+
+  String _getEsporteEmoji(String? esporte) {
+    switch (esporte?.toLowerCase()) {
+      case 'futebol':
+        return '⚽';
+      case 'vôlei':
+        return '🏐';
+      case 'basquete':
+        return '🏀';
+      default:
+        return '🏟️';
+    }
   }
 }

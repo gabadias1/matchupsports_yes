@@ -23,6 +23,8 @@ const router = Router();
  *               - identificacao
  *               - descricao
  *               - estabelecimento_id
+ *               - esporte
+ *               - valor_hora
  *             properties:
  *               identificacao:
  *                 type: string
@@ -33,8 +35,15 @@ const router = Router();
  *               estabelecimento_id:
  *                 type: integer
  *                 example: 1
+ *               esporte:
+ *                 type: string
+ *                 enum: [Futebol, Vôlei, Basquete]
+ *                 example: Futebol
+ *               valor_hora:
+ *                 type: number
+ *                 example: 50.00
  *     responses:
- *       200:
+ *       201:
  *         description: Quadra criada com sucesso
  *       404:
  *         description: Estabelecimento não encontrado

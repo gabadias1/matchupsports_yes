@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 
 export const createQuadra = async (req: Request, res: Response) => {
-    const { identificacao, descricao, estabelecimento_id } = req.body;
+    const { identificacao, descricao, estabelecimento_id, esporte, valor_hora } = req.body;
     
     // Pega o ID do usuário que o seu autenticacaoMiddleware injetou no req
     const ownerId = req.user?.id; 
@@ -14,19 +14,21 @@ export const createQuadra = async (req: Request, res: Response) => {
         });
 
         // Cria a quadra vinculando ao dono (ownerId)
-const quadra = await prisma.quadra.create({
-    data: { 
-        identificacao, 
-        descricao, 
-        estabelecimento_id: Number(estabelecimento_id),
-        dono_id: Number(ownerId) // Use dono_id para bater com seu schema.prisma
-    }
-});
+        const quadra = await prisma.quadra.create({
+            data: { 
+                identificacao, 
+                descricao, 
+                estabelecimento_id: Number(estabelecimento_id),
+                dono_id: Number(ownerId),
+                esporte, 
+                valor_hora: valor_hora ? Number(valor_hora) : null
+            }
+        });
 
         return res.status(201).json(quadra);
     } catch (error) {
-        // Se o erro for do findUniqueOrThrow do estabelecimento
-        return res.status(404).json({ message: "Estabelecimento não encontrado ou erro na criação" });
+        console.error(error);
+        return res.status(500).json({ message: "Erro ao criar quadra ou estabelecimento não encontrado" });
     }
 };
 
