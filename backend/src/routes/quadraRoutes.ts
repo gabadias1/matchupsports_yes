@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { createQuadra, deleteQuadra, getQuadra, getQuadras, updateQuadra } from "../controllers/quadraController";
+import { autenticacaoMiddleware } from "../middleware/autenticacaoMiddleware";
+import { cargoMiddleware } from "../middleware/cargoMiddleware";
 
 const router = Router();
 
@@ -9,6 +11,8 @@ const router = Router();
  *   post:
  *     summary: Cria uma nova quadra
  *     tags: [Quadras]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -19,6 +23,8 @@ const router = Router();
  *               - identificacao
  *               - descricao
  *               - estabelecimento_id
+ *               - esporte
+ *               - valor_hora
  *             properties:
  *               identificacao:
  *                 type: string
@@ -29,13 +35,25 @@ const router = Router();
  *               estabelecimento_id:
  *                 type: integer
  *                 example: 1
+ *               esporte:
+ *                 type: string
+ *                 enum: [Futebol, Vôlei, Basquete]
+ *                 example: Futebol
+ *               valor_hora:
+ *                 type: number
+ *                 example: 50.00
  *     responses:
- *       200:
+ *       201:
  *         description: Quadra criada com sucesso
  *       404:
  *         description: Estabelecimento não encontrado
  */
-router.post("/", createQuadra);
+router.post(
+  "/",
+  autenticacaoMiddleware,
+  cargoMiddleware(1),
+  createQuadra
+);
 
 /**
  * @swagger

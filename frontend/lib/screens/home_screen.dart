@@ -5,68 +5,69 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/widgets/app_widgets.dart';
- 
+import 'package:match_up_sports/models/quadra.dart';
+import 'package:match_up_sports/services/quadra_service.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
- 
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
- 
+
 class _HomeScreenState extends State<HomeScreen> {
   int _currentTab = 0;
   String _selectedSport = 'Todos';
- 
-  final List<Map<String, dynamic>> _courts = [
-    {
-      'name': 'Arena Central',
-      'sport': 'Futebol',
-      'location': 'Centro',
-      'distance': '0.8km',
-      'price': '80',
-      'available': true,
-    },
-    {
-      'name': 'Complexo Esportivo Sul',
-      'sport': 'Vôlei',
-      'location': 'Bairro Sul',
-      'distance': '1.2km',
-      'price': '60',
-      'available': true,
-    },
-    {
-      'name': 'Quadra do Parque',
-      'sport': 'Basquete',
-      'location': 'Parque Central',
-      'distance': '2.1km',
-      'price': '45',
-      'available': false,
-    },
-    {
-      'name': 'Arena Pro Sports',
-      'sport': 'Futebol',
-      'location': 'Zona Norte',
-      'distance': '3.0km',
-      'price': '120',
-      'available': true,
-    },
-    {
-      'name': 'Clube Recreativo',
-      'sport': 'Vôlei',
-      'location': 'Vila Nova',
-      'distance': '3.5km',
-      'price': '50',
-      'available': true,
-    },
-  ];
- 
-  List<Map<String, dynamic>> get _filteredCourts {
-    if (_selectedSport == 'Todos') return _courts;
-    return _courts
-        .where((c) => c['sport'] == _selectedSport)
-        .toList();
+  double? _maxPrice;
+  List<Map<String, dynamic>> _courts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuadras();
   }
- 
+
+  Future<void> _loadQuadras() async {
+    try {
+      final quadras = await QuadraService.getQuadras();
+      setState(() {
+        _courts = quadras
+            .map((q) => {
+                  'name': q.identificacao,
+                  'sport': q.esporte ?? 'Futebol',
+                  'location': q.descricao,
+                  'distance': '',
+                  'price': q.valorHora != null
+                      ? 'R\$ ${q.valorHora!.toStringAsFixed(2)}/h'
+                      : '—',
+                  'available': true,
+                  'valor': q.valorHora ?? 0.0,
+                })
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredCourts {
+    var filtered = _courts;
+    
+    if (_selectedSport != 'Todos') {
+      filtered = filtered.where((c) => c['sport'] == _selectedSport).toList();
+    }
+    
+    if (_maxPrice != null) {
+      filtered = filtered
+          .where((c) => ((c['valor'] as double?) ?? 0.0) <= _maxPrice!)
+          .toList();
+    }
+    
+    return filtered;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,9 +77,13 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _HomeTab(
               selectedSport: _selectedSport,
+              maxPrice: _maxPrice,
               filteredCourts: _filteredCourts,
               onSportSelected: (sport) =>
                   setState(() => _selectedSport = sport),
+              onPriceChanged: (price) =>
+                  setState(() => _maxPrice = price),
+              isLoading: _isLoading,
             ),
             _MatchTab(),
             _ReservasTab(),
@@ -89,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: _buildBottomNav(),
     );
   }
- 
+
   Widget _buildBottomNav() {
     return Container(
       decoration: const BoxDecoration(
@@ -133,19 +138,31 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
- 
+
 // ── Aba Home ─────────────────────────────────────────────────────────────────
-class _HomeTab extends StatelessWidget {
+class _HomeTab extends StatefulWidget {
   final String selectedSport;
+  final double? maxPrice;
   final List<Map<String, dynamic>> filteredCourts;
   final Function(String) onSportSelected;
- 
+  final Function(double?) onPriceChanged;
+  final bool isLoading;
+
   const _HomeTab({
     required this.selectedSport,
+    required this.maxPrice,
     required this.filteredCourts,
     required this.onSportSelected,
+    required this.onPriceChanged,
+    required this.isLoading,
   });
- 
+
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  bool isLoading = false;
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -154,7 +171,6 @@ class _HomeTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Container(
                 color: AppColors.dark,
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
@@ -197,7 +213,6 @@ class _HomeTab extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 18),
-                    // Barra de busca
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
@@ -223,8 +238,6 @@ class _HomeTab extends StatelessWidget {
                   ],
                 ),
               ),
- 
-              // Banner Match
               Container(
                 margin: const EdgeInsets.all(20),
                 padding: const EdgeInsets.all(18),
@@ -274,16 +287,17 @@ class _HomeTab extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Text('⚽🏐🏀',
-                        style: TextStyle(fontSize: 32)),
+                    const Text('⚽🏐🏀', style: TextStyle(fontSize: 32)),
                   ],
                 ),
               ),
- 
-              // Filtros de esporte
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: SectionHeader(title: 'Quadras disponíveis'),
+                child: SectionHeader(
+                  title: 'Quadras disponíveis',
+                  actionLabel: 'Ver todas',
+                  onAction: () => context.go(AppRoutes.quadras),
+                ),
               ),
               const SizedBox(height: 12),
               SingleChildScrollView(
@@ -296,64 +310,118 @@ class _HomeTab extends StatelessWidget {
                             child: SportChip(
                               label: sport,
                               emoji: _sportEmoji(sport),
-                              isSelected: selectedSport == sport,
-                              onTap: () => onSportSelected(sport),
+                              isSelected: widget.selectedSport == sport,
+                              onTap: () => widget.onSportSelected(sport),
                             ),
                           ))
                       .toList(),
                 ),
               ),
               const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Filtro de Preço',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                        if (widget.maxPrice != null)
+                          GestureDetector(
+                            onTap: () => widget.onPriceChanged(null),
+                            child: Text(
+                              'Limpar',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 12,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Slider(
+                      value: widget.maxPrice ?? 200,
+                      min: 10,
+                      max: 200,
+                      divisions: 38,
+                      label: 'R\$ ${(widget.maxPrice ?? 200).toStringAsFixed(0)}',
+                      activeColor: AppColors.primary,
+                      inactiveColor: AppColors.grayLight,
+                      onChanged: (value) {
+                        widget.onPriceChanged(value);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
- 
-        // Lista de quadras
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: filteredCourts.isEmpty
-              ? SliverToBoxAdapter(
+          sliver: isLoading
+              ? const SliverToBoxAdapter(
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(40),
-                      child: Column(
-                        children: [
-                          const Text('🏟️', style: TextStyle(fontSize: 48)),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Nenhuma quadra encontrada',
-                            style: GoogleFonts.dmSans(
-                              fontSize: 16,
-                              color: AppColors.gray,
-                            ),
-                          ),
-                        ],
-                      ),
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(),
                     ),
                   ),
                 )
-              : SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final court = filteredCourts[index];
-                      return CourtCard(
-                        name: court['name'],
-                        sport: court['sport'],
-                        location: court['location'],
-                        distance: court['distance'],
-                        pricePerHour: court['price'],
-                        isAvailable: court['available'],
-                      );
-                    },
-                    childCount: filteredCourts.length,
-                  ),
-                ),
+              : widget.filteredCourts.isEmpty
+                  ? SliverToBoxAdapter(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(40),
+                          child: Column(
+                            children: [
+                              const Text('🏟️', style: TextStyle(fontSize: 48)),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Nenhuma quadra encontrada',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 16,
+                                  color: AppColors.gray,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final court = widget.filteredCourts[index];
+                          return CourtCard(
+                            name: court['name'],
+                            sport: court['sport'],
+                            location: court['location'],
+                            distance: court['distance'],
+                            pricePerHour: court['price'],
+                            isAvailable: court['available'],
+                          );
+                        },
+                        childCount: widget.filteredCourts.length,
+                      ),
+                    ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
       ],
     );
   }
- 
+
   String _sportEmoji(String sport) {
     switch (sport) {
       case 'Futebol':
@@ -367,7 +435,7 @@ class _HomeTab extends StatelessWidget {
     }
   }
 }
- 
+
 // ── Aba Match ─────────────────────────────────────────────────────────────────
 class _MatchTab extends StatelessWidget {
   @override
@@ -394,7 +462,7 @@ class _MatchTab extends StatelessWidget {
     );
   }
 }
- 
+
 // ── Aba Reservas ──────────────────────────────────────────────────────────────
 class _ReservasTab extends StatelessWidget {
   @override
@@ -420,7 +488,7 @@ class _ReservasTab extends StatelessWidget {
     );
   }
 }
- 
+
 // ── Aba Perfil ────────────────────────────────────────────────────────────────
 class _PerfilTab extends StatelessWidget {
   final _authService = AuthService();

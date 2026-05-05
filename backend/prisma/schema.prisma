@@ -14,28 +14,33 @@ datasource db {
 }
 
 model Usuario {
-  id    Int     @id @default(autoincrement())
-  nome  String
-  email String  @unique
-  celular String
-  senha String
-  tipo Int
+  id               Int               @id @default(autoincrement())
+  nome             String
+  email            String            @unique
+  celular          String
+  senha            String
+  tipo             Int
   estabelecimentos Estabelecimento[]
+  quadras          Quadra[]         
 }
 
 model Estabelecimento {
-  id    Int     @id @default(autoincrement())
-  proprietario Usuario @relation(fields: [proprietario_id], references:[id])
+  id              Int      @id @default(autoincrement())
+  proprietario    Usuario  @relation(fields: [proprietario_id], references: [id])
   proprietario_id Int
-  nome_local String
-  endereco String
-  quadras Quadra[]
+  nome_local      String
+  endereco        String
+  quadras         Quadra[]
 }
 
 model Quadra {
-  id    Int     @id @default(autoincrement())
-  descricao String
-  identificacao String
-  estabelecimento Estabelecimento @relation(fields: [estabelecimento_id], references:[id])
+  id                 Int             @id @default(autoincrement())
+  descricao          String
+  identificacao      String
+  esporte            String?         @default("Futebol")
+  valor_hora         Float?
+  estabelecimento    Estabelecimento @relation(fields: [estabelecimento_id], references: [id])
   estabelecimento_id Int
+  dono               Usuario         @relation(fields: [dono_id], references: [id]) 
+  dono_id            Int             
 }

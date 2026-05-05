@@ -2,13 +2,13 @@ import { Request, Response, NextFunction } from "express";
 
 export const cargoMiddleware = (...tiposPermitidos: number[]) => {
   return (
-    req: Request,
+    req: any,
     res: Response,
     next: NextFunction
   ) => {
     const userTipo = req.user?.tipo;
 
-    if (!userTipo) {
+    if (userTipo === undefined) {
       return res.status(401).json({
         error: "Usuário não autenticado.",
       });
