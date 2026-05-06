@@ -9,14 +9,16 @@ import 'package:match_up_sports/models/quadra.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialTab;
+
+  const HomeScreen({super.key, this.initialTab = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentTab = 0;
+  late int _currentTab;
   String _selectedSport = 'Todos';
   double? _maxPrice;
   List<Map<String, dynamic>> _courts = [];
@@ -25,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _currentTab = widget.initialTab;
     _loadQuadras();
   }
 
@@ -519,14 +522,41 @@ class _PerfilTab extends StatelessWidget {
           const SizedBox(height: 32),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: OutlinedButton.icon(
-              onPressed: () => _logout(context),
-              icon: const Icon(Icons.logout, size: 18),
-              label: const Text('Sair da conta'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
-              ),
+            child: Column(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => context.go(AppRoutes.criarEstabelecimento),
+                  icon: const Icon(Icons.business, size: 18),
+                  label: const Text('Cadastrar Estabelecimento'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => context.go(AppRoutes.criarQuadra),
+                  icon: const Icon(Icons.sports_soccer, size: 18),
+                  label: const Text('Cadastrar Quadra'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                OutlinedButton.icon(
+                  onPressed: () => _logout(context),
+                  icon: const Icon(Icons.logout, size: 18),
+                  label: const Text('Sair da conta'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(color: AppColors.error),
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
