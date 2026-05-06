@@ -4,18 +4,41 @@ import { prisma } from "../config/prisma";
 export const createEstabelecimento = async (req: Request, res: Response) => {
     const { nome_local, endereco, proprietario_id } = req.body;
 
+    if (!nome_local || !nome_local.toString().trim() || !endereco || !endereco.toString().trim()) {
+        return res.status(400).json({ message: "Os campos nome_local e endereco são obrigatórios." });
+    }
+
+    if (proprietario_id === undefined || proprietario_id === null) {
+        return res.status(400).json({ message: "O campo proprietario_id é obrigatório." });
+    }
+
+    const proprietarioIdNumber = Number(proprietario_id);
+    if (Number.isNaN(proprietarioIdNumber)) {
+        return res.status(400).json({ message: "O campo proprietario_id deve ser um número válido." });
+    }
+
     try {
         await prisma.usuario.findUniqueOrThrow({
-            where: { id: Number(proprietario_id) }
+            where: { id: proprietarioIdNumber }
         });
     } catch {
-        return res.status(404).json({ message: "Usuário não encontrado" });
+        return res.status(404).json({ message: "Usuário não encontrado." });
     }
-    
-    const estabelecimento = await prisma.estabelecimento.create({
-        data: { nome_local, endereco, proprietario_id: Number(proprietario_id) }
-    });
-    return res.status(201).json(estabelecimento);
+
+    try {
+        const estabelecimento = await prisma.estabelecimento.create({
+            data: {
+                nome_local: nome_local.toString().trim(),
+                endereco: endereco.toString().trim(),
+                proprietario_id: proprietarioIdNumber
+            }
+        });
+
+        return res.status(201).json(estabelecimento);
+    } catch (error) {
+        console.error("Erro ao criar estabelecimento:", error);
+        return res.status(500).json({ message: "Erro interno ao criar estabelecimento." });
+    }
 };
 
 export const getEstabelecimentos = async (req: Request, res: Response) => {

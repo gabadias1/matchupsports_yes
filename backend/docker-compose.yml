@@ -12,6 +12,7 @@ services:
     environment:
       DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/mydb"
       NODE_ENV: development
+      JWT_SECRET: "supersegredo123"
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
