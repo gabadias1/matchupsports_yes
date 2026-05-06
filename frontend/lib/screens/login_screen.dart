@@ -37,10 +37,11 @@ class _LoginScreenState extends State<LoginScreen> {
       await _authService.login(_emailController.text, _passwordController.text);
       setState(() => _isLoading = false);
       context.go(AppRoutes.home);
-    } on String catch (e) {
+    } catch (e) {
       setState(() => _isLoading = false);
+      final message = e is String ? e : e is Exception ? e.toString().replaceAll('Exception: ', '') : 'Erro ao fazer login.';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e)),
+        SnackBar(content: Text(message)),
       );
       return;
     }
