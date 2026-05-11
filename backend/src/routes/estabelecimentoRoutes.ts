@@ -1,5 +1,7 @@
 import { Router } from "express";
 import { createEstabelecimento, deleteEstabelecimento, getEstabelecimento, getEstabelecimentos, updateEstabelecimento } from "../controllers/estabelecimentoController";
+import { autenticacaoMiddleware } from "../middleware/autenticacaoMiddleware";
+import { cargoMiddleware } from "../middleware/cargoMiddleware";
 
 const router = Router();
 
@@ -35,7 +37,11 @@ const router = Router();
  *       404:
  *         description: Usuário não encontrado
  */
-router.post("/", createEstabelecimento);
+router.post("/", 
+  autenticacaoMiddleware,
+  cargoMiddleware(1), 
+  createEstabelecimento
+);
 
 /**
  * @swagger
