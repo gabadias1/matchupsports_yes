@@ -51,6 +51,38 @@ export const getQuadra = async (req: Request, res: Response) => {
     res.json(quadra);
 };
 
+export const getQuadrasByEstabelecimento = async (req: Request, res: Response) => {
+    const { estabelecimentoId } = req.params;
+
+    try {
+        await prisma.estabelecimento.findUniqueOrThrow({
+            where: { id: Number(estabelecimentoId) }
+        });
+    }
+    catch {
+        return res.status(404).json({ message: "Estabelecimento não encontrado" });
+    }
+    
+    const quadras = await prisma.quadra.findMany({
+        where: { estabelecimento_id: Number(estabelecimentoId) }
+    });
+
+    res.json(quadras);
+};
+
+export const getQuadrasByDono = async (req: Request, res: Response) => {
+    const ownerId = req.user?.id;
+
+    if (!ownerId) {
+        return res.status(401).json({ message: "Usuário não autenticado" });
+    }
+    
+    const quadras = await prisma.quadra.findMany({
+        where: { dono_id: Number(ownerId) }
+    });
+    res.json(quadras);
+};
+
 export const updateQuadra = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { identificacao, descricao, estabelecimento_id } = req.body;

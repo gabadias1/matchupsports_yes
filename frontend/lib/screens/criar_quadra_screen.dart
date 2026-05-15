@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
@@ -106,6 +107,10 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.dark),
+          onPressed: () => context.pop(),
+        ),
         title: Text(
           'Cadastrar Quadra',
           style: GoogleFonts.dmSans(

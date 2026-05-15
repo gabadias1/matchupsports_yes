@@ -82,7 +82,7 @@ class _CriarEstabelecimentoScreenState extends State<CriarEstabelecimentoScreen>
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.dark),
-          onPressed: () => context.go(AppRoutes.home),
+          onPressed: () => context.pop(),
         ),
         title: Text(
           'Cadastrar Estabelecimento',

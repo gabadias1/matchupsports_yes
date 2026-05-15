@@ -1,5 +1,7 @@
 import 'package:go_router/go_router.dart';
+import 'package:match_up_sports/screens/criar_disponibilidade_screen.dart';
 import 'package:match_up_sports/screens/home_screen.dart';
+import 'package:match_up_sports/screens/home_screen_dono_quadra.dart';
 import 'package:match_up_sports/screens/login_screen.dart';
 import 'package:match_up_sports/screens/register_screen.dart';
 import 'package:match_up_sports/screens/splash_screen.dart';
@@ -14,8 +16,10 @@ class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const quadras = '/quadras';
+  static const homeScreenOwner = '/home-dono';
   static const criarQuadra = '/criar-quadra';
   static const criarEstabelecimento = '/criar-estabelecimento';
+  static const criarDisponibilidade = '/criar-disponibilidade/:quadraId';
 }
 
 final appRouter = GoRouter(
@@ -48,6 +52,22 @@ final appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.criarEstabelecimento,
       builder: (context, state) => const CriarEstabelecimentoScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.homeScreenOwner,
+      builder: (context, state) => const HomeOwnerScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.criarDisponibilidade,
+        builder: (context, state) {
+          final quadraId = int.parse(
+            state.pathParameters['quadraId']!,
+          );
+
+          return CriarDisponibilidadeQuadraScreen(
+            quadraId: quadraId,
+          );
+        },
     ),
   ],
 );

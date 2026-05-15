@@ -62,6 +62,24 @@ export const getEstabelecimento = async (req: Request, res: Response) => {
     return res.json(estabelecimento);
 };
 
+export const getEstabelecimentoByProprietario = async (req: Request, res: Response) => {
+    const { proprietarioId } = req.params;
+    
+    try {
+        await prisma.usuario.findUniqueOrThrow({
+            where: { id: Number(proprietarioId) }
+        });
+    }
+    catch {
+        return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+    
+    const estabelecimento = await prisma.estabelecimento.findMany({
+        where: { proprietario_id: Number(proprietarioId) }
+    });
+    return res.json(estabelecimento);
+};
+
 export const updateEstabelecimento = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { nome_local, endereco, proprietario_id } = req.body;

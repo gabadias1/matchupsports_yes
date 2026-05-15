@@ -1,9 +1,46 @@
 import { Router } from "express";
-import { createQuadra, deleteQuadra, getQuadra, getQuadras, updateQuadra } from "../controllers/quadraController";
+
 import { autenticacaoMiddleware } from "../middleware/autenticacaoMiddleware";
 import { cargoMiddleware } from "../middleware/cargoMiddleware";
+import { createQuadra, deleteQuadra, getQuadra, getQuadras, getQuadrasByDono, getQuadrasByEstabelecimento, updateQuadra } from "../controllers/quadraController";
 
 const router = Router();
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Quadra:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         identificacao:
+ *           type: string
+ *           example: Quadra Society 1
+ *         descricao:
+ *           type: string
+ *           example: Quadra coberta com grama sintética
+ *         estabelecimento_id:
+ *           type: integer
+ *           example: 1
+ *         dono_id:
+ *           type: integer
+ *           example: 2
+ *         esporte:
+ *           type: string
+ *           enum:
+ *             - Futebol
+ *             - Vôlei
+ *             - Basquete
+ *             - Tênis
+ *             - Futsal
+ *           example: Futebol
+ *         valor_hora:
+ *           type: number
+ *           example: 80
+ */
 
 /**
  * @swagger
@@ -24,29 +61,35 @@ const router = Router();
  *               - descricao
  *               - estabelecimento_id
  *               - esporte
- *               - valor_hora
  *             properties:
  *               identificacao:
  *                 type: string
- *                 example: Quadra 1
+ *                 example: Quadra Society 1
  *               descricao:
  *                 type: string
- *                 example: Quadra de futebol society
+ *                 example: Quadra coberta com grama sintética
  *               estabelecimento_id:
  *                 type: integer
  *                 example: 1
  *               esporte:
  *                 type: string
- *                 enum: [Futebol, Vôlei, Basquete]
+ *                 enum:
+ *                   - Futebol
+ *                   - Vôlei
+ *                   - Basquete
+ *                   - Tênis
+ *                   - Futsal
  *                 example: Futebol
  *               valor_hora:
  *                 type: number
- *                 example: 50.00
+ *                 example: 80
  *     responses:
  *       201:
  *         description: Quadra criada com sucesso
  *       404:
  *         description: Estabelecimento não encontrado
+ *       500:
+ *         description: Erro interno ao criar quadra
  */
 router.post(
   "/",
@@ -66,6 +109,50 @@ router.post(
  *         description: Lista de quadras retornada com sucesso
  */
 router.get("/", getQuadras);
+
+/**
+ * @swagger
+ * /quadras/estabelecimento/{estabelecimentoId}:
+ *   get:
+ *     summary: Lista todas as quadras de um estabelecimento
+ *     tags: [Quadras]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: estabelecimentoId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Lista de quadras do estabelecimento
+ *       404:
+ *         description: Estabelecimento não encontrado
+ */
+router.get("/estabelecimento/:estabelecimentoId", 
+            getQuadrasByEstabelecimento);
+
+/**
+ * @swagger
+ * /quadras/minhas:
+ *   get:
+ *     summary: Lista as quadras do usuário autenticado
+ *     tags: [Quadras]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de quadras do dono autenticado
+ *       401:
+ *         description: Usuário não autenticado
+ */
+router.get("/minhas", 
+  autenticacaoMiddleware,
+  cargoMiddleware(1),
+  getQuadrasByDono
+);
 
 /**
  * @swagger
@@ -95,6 +182,8 @@ router.get("/:id", getQuadra);
  *   put:
  *     summary: Atualiza uma quadra
  *     tags: [Quadras]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -112,20 +201,36 @@ router.get("/:id", getQuadra);
  *             properties:
  *               identificacao:
  *                 type: string
- *                 example: Quadra 2
+ *                 example: Quadra Reformada
  *               descricao:
  *                 type: string
- *                 example: Quadra reformada
+ *                 example: Quadra com iluminação LED
  *               estabelecimento_id:
  *                 type: integer
  *                 example: 2
+ *               esporte:
+ *                 type: string
+ *                 enum:
+ *                   - Futebol
+ *                   - Vôlei
+ *                   - Basquete
+ *                   - Tênis
+ *                   - Futsal
+ *                 example: Futebol
+ *               valor_hora:
+ *                 type: number
+ *                 example: 120
  *     responses:
  *       200:
  *         description: Quadra atualizada com sucesso
  *       404:
  *         description: Quadra ou estabelecimento não encontrado
  */
-router.put("/:id", updateQuadra);
+router.put("/:id", 
+  autenticacaoMiddleware, 
+  cargoMiddleware(1), 
+  updateQuadra
+);
 
 /**
  * @swagger
@@ -133,6 +238,8 @@ router.put("/:id", updateQuadra);
  *   delete:
  *     summary: Deleta uma quadra
  *     tags: [Quadras]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -147,6 +254,10 @@ router.put("/:id", updateQuadra);
  *       404:
  *         description: Quadra não encontrada
  */
-router.delete("/:id", deleteQuadra);
+router.delete("/:id", 
+  autenticacaoMiddleware, 
+  cargoMiddleware(1), 
+  deleteQuadra
+);
 
 export default router;

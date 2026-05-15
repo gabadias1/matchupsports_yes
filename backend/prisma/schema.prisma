@@ -21,7 +21,8 @@ model Usuario {
   senha            String
   tipo             Int
   estabelecimentos Estabelecimento[]
-  quadras          Quadra[]         
+  quadras          Quadra[]      
+  reservas         Reserva[]   
 }
 
 model Estabelecimento {
@@ -42,5 +43,47 @@ model Quadra {
   estabelecimento    Estabelecimento @relation(fields: [estabelecimento_id], references: [id])
   estabelecimento_id Int
   dono               Usuario         @relation(fields: [dono_id], references: [id]) 
-  dono_id            Int             
+  dono_id            Int
+  disponibilidades   Disponibilidade[]
+  reservas           Reserva[]             
+}
+
+enum DiaSemana {
+  SEGUNDA
+  TERCA
+  QUARTA
+  QUINTA
+  SEXTA
+  SABADO
+  DOMINGO
+}
+
+model Disponibilidade {
+  id          Int        @id @default(autoincrement())
+  quadra      Quadra     @relation(fields: [quadra_id], references: [id])
+  quadra_id   Int
+  dia_semana  DiaSemana
+  hora_inicio Int
+  hora_fim    Int
+  ativo       Boolean    @default(true)
+}
+
+model Reserva {
+  id            Int       @id @default(autoincrement())
+  usuario        Usuario   @relation(fields: [usuario_id], references: [id])
+  usuario_id     Int
+  quadra         Quadra    @relation(fields: [quadra_id], references: [id])
+  quadra_id      Int
+  data           DateTime
+  hora_inicio    Int
+  hora_fim       Int
+  status         StatusReserva @default(PENDENTE)
+  created_at     DateTime @default(now())
+  @@unique([quadra_id, data, hora_inicio])
+}
+
+enum StatusReserva {
+  PENDENTE
+  CONFIRMADA
+  CANCELADA
 }

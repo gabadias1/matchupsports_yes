@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:match_up_sports/models/quadra.dart';
 import 'package:match_up_sports/services/auth_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class QuadraService {
   static const String _baseUrl = 'http://localhost:3000';
@@ -10,6 +9,18 @@ class QuadraService {
 
   static Future<List<QuadraModel>> getQuadras() async {
     final response = await _dio.get('/quadras');
+    final List<dynamic> data = response.data;
+    return data.map((json) => QuadraModel.fromJson(json)).toList();
+  }
+
+  static Future<List<QuadraModel>> getQuadrasByDono() async {
+    final token = await _authService.getToken();
+    final response = await _dio.get('/quadras/minhas', 
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),);
     final List<dynamic> data = response.data;
     return data.map((json) => QuadraModel.fromJson(json)).toList();
   }
