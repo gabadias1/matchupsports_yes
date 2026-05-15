@@ -7,8 +7,8 @@ export function setupSwagger(app: Express) {
     definition: {
       openapi: "3.0.0",
       info: {
-        title: "Minha API",
-        version: "1.0.0",
+        title: "MatchUpSportsYES API",
+        version: "1.0.1",
         description: "Documentação da API",
       },
 

@@ -36,7 +36,13 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _authService.login(_emailController.text, _passwordController.text);
       setState(() => _isLoading = false);
-      context.go(AppRoutes.home);
+      if (await _authService.getTipo() == 0) {
+        context.go(AppRoutes.home);
+      } else if (await _authService.getTipo() == 1) {
+        context.go(AppRoutes.homeScreenOwner);
+      } else {
+        context.go(AppRoutes.home);
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       final message = e is String ? e : e is Exception ? e.toString().replaceAll('Exception: ', '') : 'Erro ao fazer login.';
@@ -45,8 +51,26 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       return;
     }
+  }
+  
+  void _checkLoggedIn() async {
+    final token = await _authService.getToken();
+    if (token != null) {
+      final tipo = await _authService.getTipo();
+      if (tipo == 0) {
+        context.go(AppRoutes.home);
+      } else if (tipo == 1) {
+        context.go(AppRoutes.homeScreenOwner);
+      } else {
+        context.go(AppRoutes.home);
+      }
+    }
+  }
 
-
+  @override
+  void initState() {
+    super.initState();
+    _checkLoggedIn();
   }
 
   @override
