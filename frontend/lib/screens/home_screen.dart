@@ -493,8 +493,31 @@ class _ReservasTab extends StatelessWidget {
 }
 
 // ── Aba Perfil ────────────────────────────────────────────────────────────────
-class _PerfilTab extends StatelessWidget {
+class _PerfilTab extends StatefulWidget {
+  const _PerfilTab({super.key});
+
+  @override
+  State<_PerfilTab> createState() => _PerfilTabState();
+}
+
+class _PerfilTabState extends State<_PerfilTab> {
   final _authService = AuthService();
+  bool? _isOwner;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserType();
+  }
+
+  Future<void> _loadUserType() async {
+    final tipo = await _authService.getTipo();
+    setState(() {
+      _isOwner = tipo == 1;
+      _isLoading = false;
+    });
+  }
 
   void _logout(BuildContext context) async {
     await _authService.logout();
@@ -503,6 +526,10 @@ class _PerfilTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -524,28 +551,30 @@ class _PerfilTab extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Column(
               children: [
-                ElevatedButton.icon(
-                  onPressed: () => context.go(AppRoutes.criarEstabelecimento),
-                  icon: const Icon(Icons.business, size: 18),
-                  label: const Text('Cadastrar Estabelecimento'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 48),
+                if (_isOwner == true) ...[
+                  ElevatedButton.icon(
+                    onPressed: () => context.go(AppRoutes.criarEstabelecimento),
+                    icon: const Icon(Icons.business, size: 18),
+                    label: const Text('Cadastrar Estabelecimento'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () => context.go(AppRoutes.criarQuadra),
-                  icon: const Icon(Icons.sports_soccer, size: 18),
-                  label: const Text('Cadastrar Quadra'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 48),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => context.go(AppRoutes.criarQuadra),
+                    icon: const Icon(Icons.sports_soccer, size: 18),
+                    label: const Text('Cadastrar Quadra'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
+                ],
                 OutlinedButton.icon(
                   onPressed: () => _logout(context),
                   icon: const Icon(Icons.logout, size: 18),
