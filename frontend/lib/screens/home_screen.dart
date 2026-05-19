@@ -5,8 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/widgets/app_widgets.dart';
-import 'package:match_up_sports/models/quadra.dart';
+import 'package:match_up_sports/models/reserva.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
+import 'package:match_up_sports/services/reserva_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
@@ -20,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late int _currentTab;
   String _selectedSport = 'Todos';
-  double? _maxPrice;
+  RangeValues _priceRange = const RangeValues(10, 200);
   List<Map<String, dynamic>> _courts = [];
   bool _isLoading = true;
 
@@ -37,12 +38,13 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _courts = quadras
             .map((q) => {
+                  'id': q.id,
                   'name': q.identificacao,
                   'sport': q.esporte ?? 'Futebol',
                   'location': q.descricao,
                   'distance': '',
                   'price': q.valorHora != null
-                      ? 'R\$ ${q.valorHora!.toStringAsFixed(2)}/h'
+                      ? q.valorHora!.toStringAsFixed(2)
                       : '—',
                   'available': true,
                   'valor': q.valorHora ?? 0.0,
@@ -62,11 +64,10 @@ class _HomeScreenState extends State<HomeScreen> {
       filtered = filtered.where((c) => c['sport'] == _selectedSport).toList();
     }
     
-    if (_maxPrice != null) {
-      filtered = filtered
-          .where((c) => ((c['valor'] as double?) ?? 0.0) <= _maxPrice!)
-          .toList();
-    }
+    filtered = filtered.where((c) {
+      final double valor = (c['valor'] as double?) ?? 0.0;
+      return valor >= _priceRange.start && valor <= _priceRange.end;
+    }).toList();
     
     return filtered;
   }
@@ -80,12 +81,12 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             _HomeTab(
               selectedSport: _selectedSport,
-              maxPrice: _maxPrice,
+              priceRange: _priceRange,
               filteredCourts: _filteredCourts,
               onSportSelected: (sport) =>
                   setState(() => _selectedSport = sport),
-              onPriceChanged: (price) =>
-                  setState(() => _maxPrice = price),
+              onPriceChanged: (range) =>
+                  setState(() => _priceRange = range),
               isLoading: _isLoading,
             ),
             _MatchTab(),
@@ -145,15 +146,15 @@ class _HomeScreenState extends State<HomeScreen> {
 // ── Aba Home ─────────────────────────────────────────────────────────────────
 class _HomeTab extends StatefulWidget {
   final String selectedSport;
-  final double? maxPrice;
+  final RangeValues priceRange;
   final List<Map<String, dynamic>> filteredCourts;
   final Function(String) onSportSelected;
-  final Function(double?) onPriceChanged;
+  final Function(RangeValues) onPriceChanged;
   final bool isLoading;
 
   const _HomeTab({
     required this.selectedSport,
-    required this.maxPrice,
+    required this.priceRange,
     required this.filteredCourts,
     required this.onSportSelected,
     required this.onPriceChanged,
@@ -337,31 +338,31 @@ class _HomeTabState extends State<_HomeTab> {
                             color: AppColors.dark,
                           ),
                         ),
-                        if (widget.maxPrice != null)
-                          GestureDetector(
-                            onTap: () => widget.onPriceChanged(null),
-                            child: Text(
-                              'Limpar',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 12,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                        // Mostra a faixa de preço atualizada dinamicamente
+                        Text(
+                          'R\$ ${widget.priceRange.start.toStringAsFixed(0)} - R\$ ${widget.priceRange.end.toStringAsFixed(0)}',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
                           ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Slider(
-                      value: widget.maxPrice ?? 200,
+                    RangeSlider(
+                      values: widget.priceRange,
                       min: 10,
                       max: 200,
-                      divisions: 38,
-                      label: 'R\$ ${(widget.maxPrice ?? 200).toStringAsFixed(0)}',
+                      divisions: 38, // 38 divisões cria passos de R$ 5
+                      labels: RangeLabels(
+                        'R\$ ${widget.priceRange.start.toStringAsFixed(0)}',
+                        'R\$ ${widget.priceRange.end.toStringAsFixed(0)}',
+                      ),
                       activeColor: AppColors.primary,
                       inactiveColor: AppColors.grayLight,
-                      onChanged: (value) {
-                        widget.onPriceChanged(value);
+                      onChanged: (RangeValues newRange) {
+                        widget.onPriceChanged(newRange);
                       },
                     ),
                   ],
@@ -414,6 +415,7 @@ class _HomeTabState extends State<_HomeTab> {
                             distance: court['distance'],
                             pricePerHour: court['price'],
                             isAvailable: court['available'],
+                            onTap: () => _showReservaDialog(context, court),
                           );
                         },
                         childCount: widget.filteredCourts.length,
@@ -436,6 +438,161 @@ class _HomeTabState extends State<_HomeTab> {
       default:
         return '🏟️';
     }
+  }
+
+  Future<void> _showReservaDialog(BuildContext context, Map<String, dynamic> court) async {
+    DateTime selectedDate = DateTime.now();
+    List<Map<String, int>>? availableSlots;
+    bool loadingSlots = false;
+    int? selectedSlotIndex;
+    bool slotsLoaded = false;
+
+    String fmt(int hhmm) {
+      final h = (hhmm ~/ 100).toString().padLeft(2, '0');
+      final m = (hhmm % 100).toString().padLeft(2, '0');
+      return '$h:$m';
+    }
+
+    Future<void> loadSlots(void Function(void Function()) setStateDialog) async {
+      setStateDialog(() {
+        loadingSlots = true;
+        availableSlots = null;
+        selectedSlotIndex = null;
+      });
+
+      try {
+        final dateStr = selectedDate.toIso8601String().split('T').first;
+        final slots = await ReservaService.getAvailableSlots(quadraId: court['id'], date: dateStr);
+        final filtered = slots.where((s) => (s['start'] ?? 0) >= 600).toList();
+        setStateDialog(() {
+          availableSlots = filtered;
+          selectedSlotIndex = filtered.isNotEmpty ? 0 : null;
+          slotsLoaded = true;
+        });
+      } catch (_) {
+        setStateDialog(() {
+          availableSlots = [];
+          selectedSlotIndex = null;
+          slotsLoaded = true;
+        });
+      } finally {
+        setStateDialog(() => loadingSlots = false);
+      }
+    }
+
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(builder: (context, setStateDialog) {
+          if (!slotsLoaded && !loadingSlots) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              loadSlots(setStateDialog);
+            });
+          }
+
+          return AlertDialog(
+            title: Text('Reservar ${court['name']}'),
+            // 1. Envolvemos a Column com SizedBox de maxFinite
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(selectedDate.toIso8601String().split('T').first),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          final d = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (d != null) {
+                            setStateDialog(() {
+                              selectedDate = d;
+                              slotsLoaded = false;
+                            });
+                            await loadSlots(setStateDialog);
+                          }
+                        },
+                        child: const Text('Data'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (loadingSlots) const Center(child: CircularProgressIndicator()),
+                  if (!loadingSlots && availableSlots == null)
+                    ElevatedButton(onPressed: () => loadSlots(setStateDialog), child: const Text('Buscar horários disponíveis')),
+                  if (!loadingSlots && availableSlots != null && availableSlots!.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text('Nenhum horário disponível para a data selecionada.'),
+                    ),
+                  if (!loadingSlots && availableSlots != null && availableSlots!.isNotEmpty)
+                    ConstrainedBox(
+                      // O maxHeight aqui já estava perfeito, ele evita que a lista cresça até o infinito verticalmente!
+                      constraints: const BoxConstraints(maxHeight: 240),
+                      child: ListView.builder(
+                        shrinkWrap: true, // Mantemos o shrinkWrap
+                        itemCount: availableSlots!.length,
+                        itemBuilder: (context, i) {
+                          final s = availableSlots![i];
+                          final label = '${fmt(s['start'] ?? 0)} — ${fmt(s['end'] ?? 0)}';
+                          final selected = selectedSlotIndex == i;
+                          return ListTile(
+                            title: Text(label),
+                            trailing: selected ? const Icon(Icons.check_circle, color: Colors.green) : null,
+                            onTap: () => setStateDialog(() => selectedSlotIndex = i),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+              ElevatedButton(
+                onPressed: () async {
+                  if (availableSlots == null || availableSlots!.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nenhum horário disponível.')));
+                    return;
+                  }
+
+                  if (selectedSlotIndex == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecione um horário disponível antes de reservar.')));
+                    return;
+                  }
+
+                  final chosen = availableSlots![selectedSlotIndex!];
+                  final hi = chosen['start']!;
+                  final hf = chosen['end']!;
+                  final dateStr = selectedDate.toIso8601String().split('T').first;
+
+                  try {
+                    await ReservaService.createReserva(
+                      quadraId: court['id'],
+                      data: dateStr,
+                      horaInicio: hi,
+                      horaFim: hf,
+                    );
+                    Navigator.of(ctx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reserva criada com sucesso')));
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                  }
+                },
+                child: const Text('Reservar'),
+              ),
+            ],
+          );
+        });
+      },
+    );
   }
 }
 
@@ -467,34 +624,83 @@ class _MatchTab extends StatelessWidget {
 }
 
 // ── Aba Reservas ──────────────────────────────────────────────────────────────
-class _ReservasTab extends StatelessWidget {
+class _ReservasTab extends StatefulWidget {
+  @override
+  State<_ReservasTab> createState() => _ReservasTabState();
+}
+
+class _ReservasTabState extends State<_ReservasTab> {
+  List<Reserva> _reservas = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReservas();
+  }
+
+  Future<void> _loadReservas() async {
+    try {
+      final res = await ReservaService.getMinhasReservas();
+      setState(() {
+        _reservas = res;
+        _isLoading = false;
+      });
+    } catch (_) {
+      setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('📅', style: TextStyle(fontSize: 56)),
-          const SizedBox(height: 16),
-          Text(
-            'Minhas Reservas',
-            style: GoogleFonts.bebasNeue(
-                fontSize: 32, color: AppColors.dark, letterSpacing: 1),
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_reservas.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('📅', style: TextStyle(fontSize: 56)),
+            const SizedBox(height: 16),
+            Text(
+              'Minhas Reservas',
+              style: GoogleFonts.bebasNeue(
+                  fontSize: 32, color: AppColors.dark, letterSpacing: 1),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Você ainda não possui reservas.',
+              style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.gray),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(20),
+      itemCount: _reservas.length,
+      itemBuilder: (context, index) {
+        final r = _reservas[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: ListTile(
+            leading: const Icon(Icons.event),
+            title: Text('Data: ${r.data}'),
+            subtitle: Text('Quadra: ${r.quadraId} — ${r.horaInicio} às ${r.horaFim}'),
+            trailing: Text(r.status),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Suas reservas aparecerão aqui.',
-            style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.gray),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 // ── Aba Perfil ────────────────────────────────────────────────────────────────
 class _PerfilTab extends StatefulWidget {
-  const _PerfilTab({super.key});
+  const _PerfilTab();
 
   @override
   State<_PerfilTab> createState() => _PerfilTabState();
