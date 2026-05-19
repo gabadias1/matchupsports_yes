@@ -88,13 +88,13 @@ class _CriarEstabelecimentoScreenState extends State<CriarEstabelecimentoScreen>
           'Cadastrar Estabelecimento',
           style: GoogleFonts.dmSans(
             fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColors.dark,
+            fontWeight: FontWeight.w700,
+            color: AppColors.white,
           ),
         ),
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.primary,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.dark),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -103,24 +103,56 @@ class _CriarEstabelecimentoScreenState extends State<CriarEstabelecimentoScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(14)
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '⚽ / 🏀 / 🏐 / 🎾',
+                      style: GoogleFonts.dmSans(fontSize: 48),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Novo estabelecimento',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.dark,
+                      ),
+                    ),
+                    Text(
+                      'Preencha as informações do estabelecimento',
+                      style: GoogleFonts.dmSans(
+                        fontSize: 14,
+                        color: AppColors.gray,
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              // Nome Local
               Text(
-                'Informações do Estabelecimento',
+                'Nome do local',
                 style: GoogleFonts.dmSans(
-                  fontSize: 18,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.dark,
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // Nome Local
               TextFormField(
                 controller: _nomeLocalController,
                 decoration: InputDecoration(
-                  labelText: 'Nome do Local',
                   hintText: 'Ex: Arena do Moranguinho',
+                  hintStyle: GoogleFonts.dmSans(color: AppColors.grayLight),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppColors.grayLight),
                   ),
                   filled: true,
                   fillColor: AppColors.surface,
@@ -135,10 +167,17 @@ class _CriarEstabelecimentoScreenState extends State<CriarEstabelecimentoScreen>
               const SizedBox(height: 16),
 
               // Endereço
+              Text(
+                'Endereço',
+                style: GoogleFonts.dmSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.dark,
+                ),
+              ),
               TextFormField(
                 controller: _enderecoController,
                 decoration: InputDecoration(
-                  labelText: 'Endereço',
                   hintText: 'Ex: Rua B, 456',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),

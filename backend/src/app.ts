@@ -5,6 +5,7 @@ import estabelecimentoRoutes from "./routes/estabelecimentoRoutes";
 import quadraRoutes from "./routes/quadraRoutes";
 import autenticacaoRoutes from "./routes/autenticacaoRoutes";
 import disponibilidadeRoutes from "./routes/disponibilidadeRoutes";
+import reservaRoutes from "./routes/reservaRoutes";
 import swaggerUi from "swagger-ui-express";
 import { setupSwagger, swaggerSpec } from "./config/swagger";
 import reservaRouter from "./routes/reservaRoute";
@@ -25,6 +26,7 @@ app.use("/estabelecimentos", estabelecimentoRoutes);
 app.use("/quadras", quadraRoutes);
 app.use("/autenticacao", autenticacaoRoutes);
 app.use("/disponibilidades", disponibilidadeRoutes);
+app.use("/reservas", reservaRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend rodando! 🚀");
