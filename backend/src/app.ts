@@ -8,11 +8,13 @@ import disponibilidadeRoutes from "./routes/disponibilidadeRoutes";
 import reservaRoutes from "./routes/reservaRoutes";
 import swaggerUi from "swagger-ui-express";
 import { setupSwagger, swaggerSpec } from "./config/swagger";
+import reservaRouter from "./routes/reservaRoute";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/reservas", reservaRouter);
 
 // Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

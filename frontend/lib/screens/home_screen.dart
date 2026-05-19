@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Map<String, dynamic>> get _filteredCourts {
     var filtered = _courts;
-    
+
     if (_selectedSport != 'Todos') {
       filtered = filtered.where((c) => c['sport'] == _selectedSport).toList();
     }
@@ -90,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
               isLoading: _isLoading,
             ),
             _MatchTab(),
-            _ReservasTab(),
+            const MinhasReservasTab(), // ← substituído aqui
             _PerfilTab(),
           ],
         ),
@@ -167,6 +167,7 @@ class _HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<_HomeTab> {
   bool isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
