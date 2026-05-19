@@ -7,6 +7,7 @@ import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/widgets/app_widgets.dart';
 import 'package:match_up_sports/models/quadra.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
+import 'package:match_up_sports/screens/minhas_reservas_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
@@ -57,17 +58,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Map<String, dynamic>> get _filteredCourts {
     var filtered = _courts;
-    
+
     if (_selectedSport != 'Todos') {
       filtered = filtered.where((c) => c['sport'] == _selectedSport).toList();
     }
-    
+
     if (_maxPrice != null) {
       filtered = filtered
           .where((c) => ((c['valor'] as double?) ?? 0.0) <= _maxPrice!)
           .toList();
     }
-    
+
     return filtered;
   }
 
@@ -84,12 +85,11 @@ class _HomeScreenState extends State<HomeScreen> {
               filteredCourts: _filteredCourts,
               onSportSelected: (sport) =>
                   setState(() => _selectedSport = sport),
-              onPriceChanged: (price) =>
-                  setState(() => _maxPrice = price),
+              onPriceChanged: (price) => setState(() => _maxPrice = price),
               isLoading: _isLoading,
             ),
             _MatchTab(),
-            _ReservasTab(),
+            const MinhasReservasTab(), // ← substituído aqui
             _PerfilTab(),
           ],
         ),
@@ -166,6 +166,7 @@ class _HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<_HomeTab> {
   bool isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -357,7 +358,8 @@ class _HomeTabState extends State<_HomeTab> {
                       min: 10,
                       max: 200,
                       divisions: 38,
-                      label: 'R\$ ${(widget.maxPrice ?? 200).toStringAsFixed(0)}',
+                      label:
+                          'R\$ ${(widget.maxPrice ?? 200).toStringAsFixed(0)}',
                       activeColor: AppColors.primary,
                       inactiveColor: AppColors.grayLight,
                       onChanged: (value) {
@@ -458,32 +460,6 @@ class _MatchTab extends StatelessWidget {
           Text(
             'Em breve: encontre jogadores\ne complete seu time!',
             textAlign: TextAlign.center,
-            style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.gray),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Aba Reservas ──────────────────────────────────────────────────────────────
-class _ReservasTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('📅', style: TextStyle(fontSize: 56)),
-          const SizedBox(height: 16),
-          Text(
-            'Minhas Reservas',
-            style: GoogleFonts.bebasNeue(
-                fontSize: 32, color: AppColors.dark, letterSpacing: 1),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Suas reservas aparecerão aqui.',
             style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.gray),
           ),
         ],
