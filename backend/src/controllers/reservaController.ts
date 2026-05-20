@@ -97,8 +97,12 @@ export const createReserva = async (req: Request, res: Response) => {
     });
 
     return res.status(201).json(reserva);
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
+    // Tratamento específico para erro de constraint única (horário duplicado)
+    if (error.code === 'P2002' && error.meta?.target?.includes('hora_inicio')) {
+      return res.status(409).json({ message: "Este horário já possui uma reserva para esta quadra." });
+    }
     return res.status(500).json({ message: "Erro ao criar reserva." });
   }
 };
@@ -112,6 +116,15 @@ export const getMinhasReservas = async (req: Request, res: Response) => {
 
   const reservas = await prisma.reserva.findMany({
     where: { usuario_id: usuarioId },
+    include: {
+      quadra: {
+        include: {
+          estabelecimento: {
+            select: { nome_local: true },
+          },
+        },
+      },
+    },
     orderBy: { data: "desc" },
   });
 
@@ -217,4 +230,80 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
   hourlySlots.sort((a, b) => a.start - b.start);
 
   return res.json(hourlySlots);
+};
+
+export const cancelarReserva = async (req: Request, res: Response) => {
+  const reservaId = Number(req.params.id);
+  const usuarioId = Number(req.user?.id);
+
+  if (!usuarioId) {
+    return res.status(401).json({ message: "Usuário não autenticado." });
+  }
+
+  try {
+    // 1. Busca a reserva para garantir que ela existe
+    const reserva = await prisma.reserva.findUnique({
+      where: { id: reservaId },
+    });
+
+    if (!reserva) {
+      return res.status(404).json({ message: "Reserva não encontrada." });
+    }
+
+    // 2. Garante que o usuário só pode deletar a PRÓPRIA reserva
+    if (reserva.usuario_id !== usuarioId) {
+      return res.status(403).json({ message: "Você não tem permissão para cancelar esta reserva." });
+    }
+
+    // 3. Deleta a reserva
+    await prisma.reserva.delete({
+      where: { id: reservaId },
+    });
+
+    return res.status(200).json({ message: "Reserva cancelada com sucesso." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao cancelar a reserva." });
+  }
+};
+
+export const getReservasDonoQuadras = async (req: Request, res: Response) => {
+  const donoId = Number(req.user?.id);
+
+  if (!donoId) {
+    return res.status(401).json({ message: "Usuário não autenticado." });
+  }
+
+  try {
+    // Busca todas as quadras do dono
+    const quadras = await prisma.quadra.findMany({
+      where: { dono_id: donoId },
+      select: { id: true },
+    });
+
+    const quadraIds = quadras.map((q) => q.id);
+
+    // Busca todas as reservas dessas quadras
+    const reservas = await prisma.reserva.findMany({
+      where: { quadra_id: { in: quadraIds } },
+      include: {
+        quadra: {
+          include: {
+            estabelecimento: {
+              select: { nome_local: true },
+            },
+          },
+        },
+        usuario: {
+          select: { nome: true, email: true },
+        },
+      },
+      orderBy: { data: "desc" },
+    });
+
+    res.json(reservas);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Erro ao buscar reservas." });
+  }
 };

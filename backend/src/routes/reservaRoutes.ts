@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { autenticacaoMiddleware } from "../middleware/autenticacaoMiddleware";
-import { createReserva, getMinhasReservas, getAvailableSlots } from "../controllers/reservaController";
+import { createReserva, getMinhasReservas, getAvailableSlots, getReservasDonoQuadras } from "../controllers/reservaController";
 
 const router = Router();
 
@@ -15,6 +15,12 @@ router.post("/", autenticacaoMiddleware, createReserva);
  * Retorna reservas do usuário autenticado
  */
 router.get("/minhas", autenticacaoMiddleware, getMinhasReservas);
+
+/**
+ * GET /reservas/dono
+ * Retorna reservas das quadras do dono autenticado
+ */
+router.get("/dono", autenticacaoMiddleware, getReservasDonoQuadras);
 
 /**
  * GET /reservas/available?quadra_id=1&date=YYYY-MM-DD

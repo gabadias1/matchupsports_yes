@@ -6,6 +6,8 @@ import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/widgets/app_widgets.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
+import 'package:match_up_sports/services/reserva_service.dart';
+import 'package:match_up_sports/models/reserva.dart';
 
 class HomeOwnerScreen extends StatefulWidget {
   final int initialTab;
@@ -370,7 +372,9 @@ class _QuadrasTab extends StatelessWidget {
                     Row(
                       children: [
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            context.push(AppRoutes.criarQuadra);
+                          },
                           icon: const Icon(Icons.edit_outlined),
                         ),
                         IconButton(
@@ -393,34 +397,231 @@ class _QuadrasTab extends StatelessWidget {
 
 // ── RESERVAS ─────────────────────────────────────────────────────────────────
 
-class _ReservasOwnerTab extends StatelessWidget {
+class _ReservasOwnerTab extends StatefulWidget {
+  const _ReservasOwnerTab();
+
+  @override
+  State<_ReservasOwnerTab> createState() => _ReservasOwnerTabState();
+}
+
+class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
+  List<Reserva> _reservas = [];
+  bool _isLoading = true;
+  String? _erro;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarReservas();
+  }
+
+  Future<void> _carregarReservas() async {
+    setState(() {
+      _isLoading = true;
+      _erro = null;
+    });
+    try {
+      final reservas = await ReservaService.getReservasDonoQuadras();
+      setState(() {
+        _reservas = reservas;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _erro = 'Erro ao carregar reservas.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _formatarData(String data) {
+    final parts = data.split('-');
+    if (parts.length == 3) {
+      return '${parts[2]}/${parts[1]}/${parts[0]}';
+    }
+    return data;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            '📅',
-            style: TextStyle(fontSize: 56),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Reservas das Quadras',
-            style: GoogleFonts.bebasNeue(
-              fontSize: 32,
-              color: AppColors.dark,
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_erro != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('😕', style: TextStyle(fontSize: 48)),
+            const SizedBox(height: 12),
+            Text(_erro!,
+                style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.gray)),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _carregarReservas,
+              child: const Text('Tentar novamente'),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Visualize e gerencie reservas.',
-            style: GoogleFonts.dmSans(
-              fontSize: 15,
-              color: AppColors.gray,
+          ],
+        ),
+      );
+    }
+
+    if (_reservas.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('📅', style: TextStyle(fontSize: 56)),
+            const SizedBox(height: 16),
+            Text(
+              'Nenhuma reserva ainda',
+              style: GoogleFonts.bebasNeue(
+                  fontSize: 28, color: AppColors.dark, letterSpacing: 1),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'As reservas de suas quadras aparecerão aqui.',
+              style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.gray),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _carregarReservas,
+      color: AppColors.primary,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: _reservas.length,
+        itemBuilder: (context, index) {
+          final reserva = _reservas[index];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.grayLight),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Cabeçalho com quadra e status
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              reserva.quadraNome ?? 'Quadra desconhecida',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.dark,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Usuário: ${reserva.estabelecimentoNome}',
+                              style: GoogleFonts.dmSans(
+                                  fontSize: 13, color: AppColors.gray),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: reserva.status == 'CONFIRMADA'
+                              ? AppColors.primaryLight
+                              : reserva.status == 'CANCELADA'
+                                  ? const Color(0xFFFAECE7)
+                                  : AppColors.secondaryLight,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          reserva.status == 'CONFIRMADA'
+                              ? 'Confirmada'
+                              : reserva.status == 'CANCELADA'
+                                  ? 'Cancelada'
+                                  : 'Pendente',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: reserva.status == 'CONFIRMADA'
+                                ? AppColors.primary
+                                : reserva.status == 'CANCELADA'
+                                    ? AppColors.error
+                                    : AppColors.secondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1, color: AppColors.grayLight),
+                  const SizedBox(height: 12),
+                  // Detalhes da reserva
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.grayLight,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today,
+                                size: 14, color: AppColors.gray),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatarData(reserva.data),
+                              style: GoogleFonts.dmSans(
+                                fontSize: 12,
+                                color: AppColors.gray,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.grayLight,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.access_time,
+                                size: 14, color: AppColors.gray),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${Reserva.formatarHora(reserva.horaInicio)} – ${Reserva.formatarHora(reserva.horaFim)}',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 12,
+                                color: AppColors.gray,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
