@@ -46,6 +46,19 @@ class ReservaService {
     }
   }
 
+  static Future<List<Reserva>> getReservasDonoQuadras() async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      final response = await _dio.get('/dono');
+      return (response.data as List)
+          .map((json) => Reserva.fromJson(json))
+          .toList();
+    } on DioException catch (e) {
+      throw Exception('Erro ao buscar reservas: ${e.message}');
+    }
+  }
+
   static Future<List<Map<String, int>>> getAvailableSlots({required int quadraId, required String date}) async {
     try {
       final response = await _dio.get('/available', queryParameters: {
@@ -60,6 +73,16 @@ class ReservaService {
       }).toList();
     } on DioException catch (e) {
       throw Exception('Erro ao buscar horários disponíveis: ${e.message}');
+    }
+  }
+
+  static Future<void> cancelarReserva(int reservaId) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.delete('/$reservaId');
+    } on DioException catch (e) {
+      throw Exception('Erro ao cancelar reserva: ${e.message}');
     }
   }
 }

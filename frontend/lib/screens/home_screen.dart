@@ -90,8 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
               isLoading: _isLoading,
             ),
             _MatchTab(),
-            const MinhasReservasTab(), // ← substituído aqui
-            _PerfilTab(),
+            const MinhasReservasTab(), 
+            const _PerfilTab(),
           ],
         ),
       ),
@@ -493,7 +493,6 @@ class _HomeTabState extends State<_HomeTab> {
 
           return AlertDialog(
             title: Text('Reservar ${court['name']}'),
-            // 1. Envolvemos a Column com SizedBox de maxFinite
             content: SizedBox(
               width: double.maxFinite,
               child: Column(
@@ -535,10 +534,9 @@ class _HomeTabState extends State<_HomeTab> {
                     ),
                   if (!loadingSlots && availableSlots != null && availableSlots!.isNotEmpty)
                     ConstrainedBox(
-                      // O maxHeight aqui já estava perfeito, ele evita que a lista cresça até o infinito verticalmente!
                       constraints: const BoxConstraints(maxHeight: 240),
                       child: ListView.builder(
-                        shrinkWrap: true, // Mantemos o shrinkWrap
+                        shrinkWrap: true,
                         itemCount: availableSlots!.length,
                         itemBuilder: (context, i) {
                           final s = availableSlots![i];
@@ -584,7 +582,8 @@ class _HomeTabState extends State<_HomeTab> {
                     Navigator.of(ctx).pop();
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reserva criada com sucesso')));
                   } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                    final errorMessage = e.toString().replaceFirst('Exception: ', '');
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
                   }
                 },
                 child: const Text('Reservar'),
@@ -625,12 +624,14 @@ class _MatchTab extends StatelessWidget {
 }
 
 // ── Aba Reservas ──────────────────────────────────────────────────────────────
-class _ReservasTab extends StatefulWidget {
+class MinhasReservasTab extends StatefulWidget {
+  const MinhasReservasTab({super.key});
+
   @override
-  State<_ReservasTab> createState() => _ReservasTabState();
+  State<MinhasReservasTab> createState() => _MinhasReservasTabState();
 }
 
-class _ReservasTabState extends State<_ReservasTab> {
+class _MinhasReservasTabState extends State<MinhasReservasTab> {
   List<Reserva> _reservas = [];
   bool _isLoading = true;
 
@@ -690,7 +691,7 @@ class _ReservasTabState extends State<_ReservasTab> {
           child: ListTile(
             leading: const Icon(Icons.event),
             title: Text('Data: ${r.data}'),
-            subtitle: Text('Quadra: ${r.quadraId} — ${r.horaInicio} às ${r.horaFim}'),
+            subtitle: Text('Quadra: ${r.quadraId} — ${Reserva.formatarHora(r.horaInicio)} às ${Reserva.formatarHora(r.horaFim)}'),
             trailing: Text(r.status),
           ),
         );

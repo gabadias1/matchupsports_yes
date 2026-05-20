@@ -6,6 +6,10 @@ class Reserva {
   final int horaInicio;
   final int horaFim;
   final String status;
+  final String? quadraNome;
+  final String? estabelecimentoNome;
+  final double? valorHora;
+  final String? esporte;
 
   Reserva({
     required this.id,
@@ -15,6 +19,10 @@ class Reserva {
     required this.horaInicio,
     required this.horaFim,
     required this.status,
+    this.quadraNome,
+    this.estabelecimentoNome,
+    this.valorHora,
+    this.esporte,
   });
 
   factory Reserva.fromJson(Map<String, dynamic> json) {
@@ -26,6 +34,18 @@ class Reserva {
       horaInicio: json['hora_inicio'],
       horaFim: json['hora_fim'],
       status: json['status'],
+      quadraNome: json['quadra']?['identificacao'] ?? json['quadraNome'],
+      estabelecimentoNome: json['quadra']?['estabelecimento']?['nome_local'] ?? json['estabelecimentoNome'],
+      valorHora: (json['quadra']?['valor_hora'] ?? json['valorHora'])?.toDouble(),
+      esporte: json['quadra']?['esporte'] ?? json['esporte'],
     );
+  }
+
+  /// Formata a hora em formato HH:MM
+  /// Exemplo: 800 -> "8:00", 1400 -> "14:00"
+  static String formatarHora(int hora) {
+    int h = hora ~/ 100;
+    int m = hora % 100;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
   }
 }

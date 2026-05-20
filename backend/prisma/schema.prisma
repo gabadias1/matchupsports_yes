@@ -77,7 +77,7 @@ model Reserva {
   data           DateTime
   hora_inicio    Int
   hora_fim       Int
-  status         StatusReserva @default(PENDENTE)
+  status         StatusReserva @default(CONFIRMADA)
   created_at     DateTime @default(now())
   @@unique([quadra_id, data, hora_inicio])
 }
