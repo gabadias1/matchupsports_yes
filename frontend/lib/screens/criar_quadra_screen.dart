@@ -111,7 +111,7 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
         //Adicionando forma de voltar para a tela inicial
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.dark),
-          onPressed: () => context.go(AppRoutes.home),
+          onPressed: () => context.pop(),
           ),
         title: Text(
           'Cadastrar Quadra',

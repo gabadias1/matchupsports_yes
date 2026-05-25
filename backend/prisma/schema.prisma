@@ -22,7 +22,10 @@ model Usuario {
   tipo             Int
   estabelecimentos Estabelecimento[]
   quadras          Quadra[]      
-  reservas         Reserva[]   
+  reservas         Reserva[]
+  usuarioPartidas  UsuariosPartida[]
+  partidasCriadas  Partida[] @relation("CriadorPartida")
+  convites         ConvitePartida[] 
 }
 
 model Estabelecimento {
@@ -69,7 +72,7 @@ model Disponibilidade {
 }
 
 model Reserva {
-  id            Int       @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   usuario        Usuario   @relation(fields: [usuario_id], references: [id])
   usuario_id     Int
   quadra         Quadra    @relation(fields: [quadra_id], references: [id])
@@ -77,13 +80,56 @@ model Reserva {
   data           DateTime
   hora_inicio    Int
   hora_fim       Int
-  status         StatusReserva @default(CONFIRMADA)
+  status         StatusReserva @default(PENDENTE)
   created_at     DateTime @default(now())
   @@unique([quadra_id, data, hora_inicio])
+  partida        Partida?
 }
 
 enum StatusReserva {
   PENDENTE
   CONFIRMADA
   CANCELADA
+}
+
+model Partida {
+  id                Int           @id @default(autoincrement())
+  vagas             Int
+  quantidade_atual  Int           @default(1)
+  status            StatusPartida @default(ABERTA)
+  criador           Usuario       @relation("CriadorPartida", fields: [criador_id], references: [id])
+  criador_id        Int
+  reserva           Reserva       @relation(fields: [reserva_id], references: [id])
+  reserva_id        Int           @unique
+  usuariosPartida   UsuariosPartida[]
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+  convites          ConvitePartida[]
+}
+
+enum StatusPartida {
+  ABERTA
+  LOTADA
+  ENCERRADA
+  CANCELADA
+}
+
+model UsuariosPartida {
+  usuario        Usuario   @relation(fields: [usuario_id], references: [id])
+  usuario_id     Int
+  partida        Partida   @relation(fields: [partida_id], references: [id])
+  partida_id     Int
+  @@id([usuario_id, partida_id])
+}
+
+model ConvitePartida {
+  id         Int      @id @default(autoincrement())
+  token      String   @unique
+  partida    Partida  @relation(fields: [partida_id], references: [id])
+  partida_id Int
+  criador    Usuario  @relation(fields: [criador_id], references: [id])
+  criador_id Int
+  usado      Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
 }
