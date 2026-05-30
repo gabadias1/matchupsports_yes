@@ -688,11 +688,55 @@ class _MinhasReservasTabState extends State<MinhasReservasTab> {
         final r = _reservas[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: const Icon(Icons.event),
-            title: Text('Data: ${r.data}'),
-            subtitle: Text('Quadra: ${r.quadraId} — ${Reserva.formatarHora(r.horaInicio)} às ${Reserva.formatarHora(r.horaFim)}'),
-            trailing: Text(r.status),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.event),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Data: ${r.data}',
+                        style: GoogleFonts.dmSans(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  'Quadra: ${r.quadraId}',
+                  style: GoogleFonts.dmSans(),
+                ),
+
+                Text(
+                  '${Reserva.formatarHora(r.horaInicio)} às '
+                  '${Reserva.formatarHora(r.horaFim)}',
+                  style: GoogleFonts.dmSans(
+                    color: AppColors.gray,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.sports_soccer),
+                    label: const Text('Criar Partida'),
+                    onPressed: () {
+                      context.push('/criar-partida/${r.id}');
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

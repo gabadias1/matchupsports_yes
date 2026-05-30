@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/services/reserva_service.dart';
+import 'package:match_up_sports/models/reserva.dart';
 
 class MinhasReservasTab extends StatefulWidget {
   const MinhasReservasTab({super.key});
@@ -49,7 +50,7 @@ class _MinhasReservasTabState extends State<MinhasReservasTab> {
           style: GoogleFonts.dmSans(fontWeight: FontWeight.w700),
         ),
         content: Text(
-          'Deseja cancelar a reserva de "${reserva.quadraNome}" em ${_formatarData(reserva.data)}?',
+          'Deseja cancelar a reserva de "${reserva.quadraNome}" em ${reserva.data}?',
           style: GoogleFonts.dmSans(),
         ),
         actions: [
@@ -255,7 +256,7 @@ class _ReservaCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        reserva.quadraNome,
+                        reserva.quadraNome!,
                         style: GoogleFonts.dmSans(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -264,7 +265,7 @@ class _ReservaCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        reserva.estabelecimentoNome,
+                        reserva.estabelecimentoNome!,
                         style: GoogleFonts.dmSans(
                             fontSize: 13, color: AppColors.gray),
                       ),
@@ -302,7 +303,7 @@ class _ReservaCard extends StatelessWidget {
               children: [
                 _InfoChip(
                   icon: Icons.calendar_today_outlined,
-                  label: formatarData(reserva.data),
+                  label: reserva.data,
                 ),
                 const SizedBox(width: 12),
                 _InfoChip(
