@@ -97,6 +97,7 @@ model Partida {
   vagas             Int
   quantidade_atual  Int           @default(1)
   status            StatusPartida @default(ABERTA)
+  tipo              TipoPartida   @default(ABERTA)
   criador           Usuario       @relation("CriadorPartida", fields: [criador_id], references: [id])
   criador_id        Int
   reserva           Reserva       @relation(fields: [reserva_id], references: [id])
@@ -107,6 +108,11 @@ model Partida {
   convites          ConvitePartida[]
 }
 
+enum TipoPartida {
+  ABERTA
+  FECHADA
+}
+ 
 enum StatusPartida {
   ABERTA
   LOTADA

@@ -2,19 +2,29 @@ import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 
 export const createPartida = async (req: Request, res: Response) => {
-    const { vagas, status, reserva_id } = req.body;
+    const { vagas, tipo, reserva_id } = req.body;
     const criador_id = req.user?.id;
 
     try {
         const reserva = await prisma.reserva.findUniqueOrThrow({
-        where: { id: reserva_id },
+            where: { id: reserva_id },
         });
+
+        const partidaExistente = await prisma.partida.findFirst({
+            where: { reserva_id: reserva.id },
+        });
+        
+        if (partidaExistente) {
+            return res.status(400).json({
+                message: "Já existe uma partida para esta reserva.",
+            });
+        }
 
         const partida = await prisma.$transaction(async (tx) => {
             const novaPartida = await tx.partida.create({
                 data: {
                 vagas,
-                status,
+                tipo,
                 reserva_id: reserva.id,
                 criador_id: Number(criador_id),
                 quantidade_atual: 1,
@@ -34,7 +44,7 @@ export const createPartida = async (req: Request, res: Response) => {
         return res.status(201).json(partida);
     } catch (error) {
         return res.status(400).json({
-        message: "Erro ao criar partida.",
+            message: "Erro ao criar partida.",
         });
     }
 };
@@ -127,7 +137,7 @@ export const sairPartida = async (req: Request, res: Response) => {
 export const getPartidasAbertas = async (req: Request, res: Response) => {
     try {
         const partidas = await prisma.partida.findMany({
-            where: { status: "aberta" },
+            where: { tipo: "aberta" },
         });
         return res.status(200).json(partidas);
     } catch (error) {
@@ -144,7 +154,7 @@ export const getMinhasPartidas = async (req: Request, res: Response) => {
             where: {
                 usuariosPartida: {
                     some: {
-                        usuarioId: Number(userId),
+                        usuario_id: Number(userId),
                     },
                 },
             },

@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:match_up_sports/screens/criar_disponibilidade_screen.dart';
+import 'package:match_up_sports/screens/criar_partida_screen.dart';
 import 'package:match_up_sports/screens/home_screen.dart';
 import 'package:match_up_sports/screens/home_screen_dono_quadra.dart';
 import 'package:match_up_sports/screens/login_screen.dart';
@@ -20,6 +21,7 @@ class AppRoutes {
   static const criarQuadra = '/criar-quadra';
   static const criarEstabelecimento = '/criar-estabelecimento';
   static const criarDisponibilidade = '/criar-disponibilidade/:quadraId';
+  static const criarPartida = '/criar-partida/:reservaId';
 }
 
 final appRouter = GoRouter(
@@ -68,6 +70,17 @@ final appRouter = GoRouter(
             quadraId: quadraId,
           );
         },
+    ),
+    GoRoute(
+      path: AppRoutes.criarPartida,
+      builder: (context, state) {
+        final reservaId = int.parse(
+          state.pathParameters['reservaId']!,
+        );
+        return CriarPartidaScreen(
+          reservaId: reservaId,
+        );
+      },
     ),
   ],
 );

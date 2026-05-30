@@ -45,7 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      var user = await _authService.cadastrar(
+      await _authService.cadastrar(
         _nameController.text.trim(),
         _emailController.text.trim(),
         _passwordController.text,
