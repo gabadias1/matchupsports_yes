@@ -2,45 +2,55 @@
 
 enum StatusPartida {
   ABERTA,
-  FECHADA,
   LOTADA,
   ENCERRADA,
   CANCELADA,
 }
 
+enum TipoPartida {
+  ABERTA,
+  FECHADA,
+}
+
 class Partida {
-  final int? id;
+  final int id;
   final int reservaId;
   final int criadorId;
-  final String nome;
-  final String descricao;
   final int vagas;
   final int quantidade_atual;
   final StatusPartida status;
+  final TipoPartida tipo;
+  final DateTime createdAt;
 
   Partida({
-    this.id,
+    required this.id,
     required this.reservaId,
     required this.criadorId,
-    required this.nome,
-    required this.descricao,
     required this.vagas,
     required this.quantidade_atual,
     required this.status,
+    required this.tipo,
+    required this.createdAt,
   });
 
   factory Partida.fromJson(Map<String, dynamic> json) {
     return Partida(
-      id: json['id'],
-      reservaId: json['reserva_id'],
-      criadorId: json['criador_id'],
-      nome: json['nome'],
-      descricao: json['descricao'],
-      vagas: json['vagas'],
+      id: json['id'] ?? 0,
+      reservaId: json['reserva_id'] ?? 0,
+      criadorId: json['criador_id'] ?? 0,
+      vagas: json['vagas'] ?? 0,
+      quantidade_atual: json['quantidade_atual'] ?? 0,
       status: StatusPartida.values.firstWhere(
-        (e) => e.name.toUpperCase() == json['status_partida'],
+        (e) => e.name == (json['status'] ?? 'ABERTA'),
+        orElse: () => StatusPartida.ABERTA,
       ),
-      quantidade_atual: json['quantidade_atual'],
+      tipo: TipoPartida.values.firstWhere(
+        (e) => e.name == (json['tipo'] ?? 'ABERTA'),
+        orElse: () => TipoPartida.ABERTA,
+      ),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
     );
   }
 }

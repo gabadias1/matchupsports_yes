@@ -137,7 +137,7 @@ export const sairPartida = async (req: Request, res: Response) => {
 export const getPartidasAbertas = async (req: Request, res: Response) => {
     try {
         const partidas = await prisma.partida.findMany({
-            where: { tipo: "aberta" },
+            where: { status: "ABERTA" },
         });
         return res.status(200).json(partidas);
     } catch (error) {
@@ -163,6 +163,37 @@ export const getMinhasPartidas = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(400).json({
             message: "Erro ao buscar suas partidas. Tente novamente mais tarde.",
+        });
+    }
+};
+
+export const getMatchesDisponiveis = async (req: Request, res: Response) => {
+    try {
+        const partidas = await prisma.partida.findMany({
+            where: {
+                status: "ABERTA",
+            },
+            include: {
+                criador: true,
+                reserva: {
+                    include: {
+                        quadra: {
+                            include: {
+                                estabelecimento: true,
+                            },
+                        },
+                    },
+                },
+                usuariosPartida: true,
+            },
+            orderBy: {
+                created_at: "desc",
+            },
+        });
+        return res.status(200).json(partidas);
+    } catch (error) {
+        return res.status(400).json({
+            message: "Erro ao buscar partidas disponíveis. Tente novamente mais tarde.",
         });
     }
 };
