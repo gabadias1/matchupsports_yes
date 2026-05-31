@@ -23,16 +23,19 @@ class PartidaService {
       });
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception(e.response?.data?['message'] ?? 'Erro ao criar partida');
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
       }
-      throw Exception('Erro ao criar partida: ${e.message}');
+      throw Exception('Erro ao criar partida');
     }
   }
 
   static Future<List<Partida>> obterPartidasDisponiveis() async {
     try {
       final response = await _dio.get('/match');
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
         return data.map((json) => Partida.fromJson(json)).toList();
@@ -41,9 +44,53 @@ class PartidaService {
       }
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception(e.response?.data?['message'] ?? 'Erro ao buscar partidas');
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
       }
-      throw Exception('Erro ao buscar partidas: ${e.message}');
+      throw Exception('Erro ao buscar partidas');
+    }
+  }
+
+  // NOVO MÉTODO ATUALIZADO (Issue #17)
+  static Future<void> entrarPartida(int partidaId) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+
+      // CORREÇÃO: A rota correta no backend é /partidas e não /match
+      await _dio.post('/partidas/$partidaId/entrar');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final data = e.response?.data;
+        // Validação segura para evitar o TypeError que vimos na tela
+        if (data is Map && data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
+        // Se a rota falhar ou o erro não for JSON, mostra o Status Code para facilitar debug
+        throw Exception(
+            'Erro no servidor ao tentar entrar (Status: ${e.response?.statusCode})');
+      }
+      throw Exception('Erro de conexão: ${e.message}');
+    }
+  }
+
+  // NOVO MÉTODO PARA SAIR DA PARTIDA
+  static Future<void> sairDaPartida(int partidaId) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+
+      await _dio.delete('/partidas/$partidaId/sair');
+    } on DioException catch (e) {
+      if (e.response != null && e.response?.data is Map) {
+        final data = e.response?.data;
+        if (data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
+      }
+      throw Exception('Erro ao sair da partida');
     }
   }
 }
