@@ -11,6 +11,7 @@ import 'package:match_up_sports/models/reserva.dart';
 import 'package:match_up_sports/models/partida.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
 import 'package:match_up_sports/services/reserva_service.dart';
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   final int initialTab;
@@ -66,12 +67,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_selectedSport != 'Todos') {
       filtered = filtered.where((c) => c['sport'] == _selectedSport).toList();
     }
-    
+
     filtered = filtered.where((c) {
       final double valor = (c['valor'] as double?) ?? 0.0;
       return valor >= _priceRange.start && valor <= _priceRange.end;
     }).toList();
-    
+
     return filtered;
   }
 
@@ -103,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     isLoading: _isLoading,
                   ),
                   _MatchTab(),
-                  const MinhasReservasTab(), 
+                  const MinhasReservasTab(),
                   const _PerfilTab(),
                 ],
               ),
@@ -457,7 +458,8 @@ class _HomeTabState extends State<_HomeTab> {
     }
   }
 
-  Future<void> _showReservaDialog(BuildContext context, Map<String, dynamic> court) async {
+  Future<void> _showReservaDialog(
+      BuildContext context, Map<String, dynamic> court) async {
     DateTime selectedDate = DateTime.now();
     List<Map<String, int>>? availableSlots;
     bool loadingSlots = false;
@@ -470,7 +472,8 @@ class _HomeTabState extends State<_HomeTab> {
       return '$h:$m';
     }
 
-    Future<void> loadSlots(void Function(void Function()) setStateDialog) async {
+    Future<void> loadSlots(
+        void Function(void Function()) setStateDialog) async {
       setStateDialog(() {
         loadingSlots = true;
         availableSlots = null;
@@ -479,7 +482,8 @@ class _HomeTabState extends State<_HomeTab> {
 
       try {
         final dateStr = selectedDate.toIso8601String().split('T').first;
-        final slots = await ReservaService.getAvailableSlots(quadraId: court['id'], date: dateStr);
+        final slots = await ReservaService.getAvailableSlots(
+            quadraId: court['id'], date: dateStr);
         final filtered = slots.where((s) => (s['start'] ?? 0) >= 600).toList();
         setStateDialog(() {
           availableSlots = filtered;
@@ -517,7 +521,8 @@ class _HomeTabState extends State<_HomeTab> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(selectedDate.toIso8601String().split('T').first),
+                        child: Text(
+                            selectedDate.toIso8601String().split('T').first),
                       ),
                       TextButton(
                         onPressed: () async {
@@ -525,7 +530,8 @@ class _HomeTabState extends State<_HomeTab> {
                             context: context,
                             initialDate: selectedDate,
                             firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                            lastDate:
+                                DateTime.now().add(const Duration(days: 365)),
                           );
                           if (d != null) {
                             setStateDialog(() {
@@ -540,15 +546,23 @@ class _HomeTabState extends State<_HomeTab> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  if (loadingSlots) const Center(child: CircularProgressIndicator()),
+                  if (loadingSlots)
+                    const Center(child: CircularProgressIndicator()),
                   if (!loadingSlots && availableSlots == null)
-                    ElevatedButton(onPressed: () => loadSlots(setStateDialog), child: const Text('Buscar horários disponíveis')),
-                  if (!loadingSlots && availableSlots != null && availableSlots!.isEmpty)
+                    ElevatedButton(
+                        onPressed: () => loadSlots(setStateDialog),
+                        child: const Text('Buscar horários disponíveis')),
+                  if (!loadingSlots &&
+                      availableSlots != null &&
+                      availableSlots!.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text('Nenhum horário disponível para a data selecionada.'),
+                      child: Text(
+                          'Nenhum horário disponível para a data selecionada.'),
                     ),
-                  if (!loadingSlots && availableSlots != null && availableSlots!.isNotEmpty)
+                  if (!loadingSlots &&
+                      availableSlots != null &&
+                      availableSlots!.isNotEmpty)
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 240),
                       child: ListView.builder(
@@ -556,12 +570,17 @@ class _HomeTabState extends State<_HomeTab> {
                         itemCount: availableSlots!.length,
                         itemBuilder: (context, i) {
                           final s = availableSlots![i];
-                          final label = '${fmt(s['start'] ?? 0)} — ${fmt(s['end'] ?? 0)}';
+                          final label =
+                              '${fmt(s['start'] ?? 0)} — ${fmt(s['end'] ?? 0)}';
                           final selected = selectedSlotIndex == i;
                           return ListTile(
                             title: Text(label),
-                            trailing: selected ? const Icon(Icons.check_circle, color: Colors.green) : null,
-                            onTap: () => setStateDialog(() => selectedSlotIndex = i),
+                            trailing: selected
+                                ? const Icon(Icons.check_circle,
+                                    color: Colors.green)
+                                : null,
+                            onTap: () =>
+                                setStateDialog(() => selectedSlotIndex = i),
                           );
                         },
                       ),
@@ -570,23 +589,29 @@ class _HomeTabState extends State<_HomeTab> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+              TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Cancelar')),
               ElevatedButton(
                 onPressed: () async {
                   if (availableSlots == null || availableSlots!.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nenhum horário disponível.')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Nenhum horário disponível.')));
                     return;
                   }
 
                   if (selectedSlotIndex == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Selecione um horário disponível antes de reservar.')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text(
+                            'Selecione um horário disponível antes de reservar.')));
                     return;
                   }
 
                   final chosen = availableSlots![selectedSlotIndex!];
                   final hi = chosen['start']!;
                   final hf = chosen['end']!;
-                  final dateStr = selectedDate.toIso8601String().split('T').first;
+                  final dateStr =
+                      selectedDate.toIso8601String().split('T').first;
 
                   try {
                     await ReservaService.createReserva(
@@ -596,10 +621,13 @@ class _HomeTabState extends State<_HomeTab> {
                       horaFim: hf,
                     );
                     Navigator.of(ctx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reserva criada com sucesso')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Reserva criada com sucesso')));
                   } catch (e) {
-                    final errorMessage = e.toString().replaceFirst('Exception: ', '');
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
+                    final errorMessage =
+                        e.toString().replaceFirst('Exception: ', '');
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(errorMessage)));
                   }
                 },
                 child: const Text('Reservar'),
@@ -623,11 +651,32 @@ class _MatchTab extends StatefulWidget {
 class _MatchTabState extends State<_MatchTab> {
   List<Partida> _partidas = [];
   bool _isLoading = true;
+  bool _isJoining = false;
+  int? _meuUserId; // Armazena o ID do usuário logado
 
   @override
   void initState() {
     super.initState();
-    _loadPartidas();
+    _carregarDadosIniciais();
+  }
+
+  // Carrega o ID do usuário logado lendo o Token antes de puxar as partidas
+  Future<void> _carregarDadosIniciais() async {
+    try {
+      final token = await AuthService().getToken();
+      if (token != null) {
+        final parts = token.split('.');
+        if (parts.length == 3) {
+          final payloadString = String.fromCharCodes(
+              base64Url.decode(base64Url.normalize(parts[1])));
+          final payloadMap = jsonDecode(payloadString);
+          _meuUserId = payloadMap['id'];
+        }
+      }
+    } catch (e) {
+      debugPrint('Erro ao extrair ID do token: $e');
+    }
+    await _loadPartidas();
   }
 
   Future<void> _loadPartidas() async {
@@ -641,10 +690,122 @@ class _MatchTabState extends State<_MatchTab> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao carregar partidas: $e')),
+          SnackBar(
+            content: Text('Erro ao carregar partidas: $e'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
+  }
+
+  Future<void> _entrarNaPartida(int partidaId) async {
+    setState(() => _isJoining = true);
+    try {
+      await PartidaService.entrarPartida(partidaId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Você entrou na partida com sucesso! ⚽'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await _loadPartidas();
+      }
+    } catch (e) {
+      if (mounted) {
+        final errorMessage = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(errorMessage), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      setState(() => _isJoining = false);
+    }
+  }
+
+  // Sair da partida
+  Future<void> _sairDaPartida(int partidaId) async {
+    setState(() => _isJoining = true);
+    try {
+      await PartidaService.sairDaPartida(partidaId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Você saiu da partida.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        await _loadPartidas(); // Recarrega a lista para devolver a vaga
+      }
+    } catch (e) {
+      if (mounted) {
+        final errorMessage = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(errorMessage), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      setState(() => _isJoining = false);
+    }
+  }
+
+  // NOVA FUNÇÃO: Abre a lista de jogadores no Bottom Sheet
+  void _mostrarJogadores(BuildContext context, Partida partida) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Jogadores Confirmados (${partida.quantidade_atual}/${partida.vagas})',
+                style: GoogleFonts.bebasNeue(
+                    fontSize: 24, color: AppColors.dark, letterSpacing: 1),
+              ),
+              const SizedBox(height: 16),
+              if (partida.nomesJogadores.isEmpty)
+                Text(
+                  'Ninguém entrou nesta partida ainda. Seja o primeiro!',
+                  style: GoogleFonts.dmSans(color: AppColors.gray),
+                )
+              else
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: partida.nomesJogadores.length,
+                    itemBuilder: (context, i) {
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          backgroundColor: AppColors.primary.withOpacity(0.1),
+                          child: const Icon(Icons.person,
+                              color: AppColors.primary),
+                        ),
+                        title: Text(
+                          partida.nomesJogadores[i],
+                          style: GoogleFonts.dmSans(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -711,76 +872,165 @@ class _MatchTabState extends State<_MatchTab> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final partida = _partidas[index];
-                final vagasDisponiveis =
+                final int vagasDisponiveis =
                     partida.vagas - partida.quantidade_atual;
+
+                // Regras de negócio inteligentes para o Botão
+                final bool isCheia = vagasDisponiveis <= 0;
+                final bool estaNaPartida = _meuUserId != null &&
+                    partida.idsUsuarios.contains(_meuUserId);
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(
-                      color: AppColors.grayLight,
-                    ),
+                    side: const BorderSide(color: AppColors.grayLight),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Partida #${partida.id}',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.dark,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () =>
+                        _mostrarJogadores(context, partida), // Aciona a lista
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  partida.quadraNome ??
+                                      'Partida #${partida.id}',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.dark,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: vagasDisponiveis > 0
-                                    ? AppColors.primary
-                                    : AppColors.gray,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '$vagasDisponiveis vaga${vagasDisponiveis != 1 ? 's' : ''}',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.white,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: vagasDisponiveis > 0
+                                      ? AppColors.primary
+                                      : AppColors.gray,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '$vagasDisponiveis vaga${vagasDisponiveis != 1 ? 's' : ''}',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.white,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.people,
-                              size: 16,
-                              color: AppColors.gray,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${partida.quantidade_atual}/${partida.vagas} jogadores',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 13,
-                                color: AppColors.gray,
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on_outlined,
+                                  size: 16, color: AppColors.gray),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Local: ${partida.estabelecimentoNome ?? 'Não informado'}',
+                                  style: GoogleFonts.dmSans(
+                                      fontSize: 13, color: AppColors.gray),
+                                ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.calendar_today_outlined,
+                                  size: 16, color: AppColors.gray),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${partida.formatarData()} • ${partida.formatarHora(partida.horaInicio)} às ${partida.formatarHora(partida.horaFim)}',
+                                style: GoogleFonts.dmSans(
+                                    fontSize: 13, color: AppColors.gray),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.person_outline,
+                                  size: 16, color: AppColors.gray),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Organizado por: ${partida.criadorNome ?? 'Anônimo'}',
+                                  style: GoogleFonts.dmSans(
+                                      fontSize: 13, color: AppColors.gray),
+                                ),
+                              ),
+                              const Icon(Icons.people_outline,
+                                  size: 16, color: AppColors.gray),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${partida.quantidade_atual}/${partida.vagas}',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.gray,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          // Divisor e Botão Inteligente (Entrar/Sair)
+                          const SizedBox(height: 16),
+                          const Divider(height: 1, color: AppColors.grayLight),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              // Se a tela estiver carregando, OU (a partida estiver cheia E o usuário não estiver nela), o botão desativa.
+                              onPressed: _isJoining ||
+                                      (isCheia && !estaNaPartida)
+                                  ? null
+                                  // Se ele estiver na partida, clica para Sair. Se não, clica para Entrar.
+                                  : () => estaNaPartida
+                                      ? _sairDaPartida(partida.id)
+                                      : _entrarNaPartida(partida.id),
+                              style: ElevatedButton.styleFrom(
+                                // Muda a cor pra vermelho (accent) caso ele já esteja na partida, pra indicar "Atenção ao sair"
+                                backgroundColor: estaNaPartida
+                                    ? Colors.redAccent
+                                    : AppColors.primary,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: _isJoining
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                          color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : Text(
+                                      estaNaPartida
+                                          ? 'Sair da Partida'
+                                          : 'Entrar na Partida',
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                             ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -819,8 +1069,78 @@ class _MinhasReservasTabState extends State<MinhasReservasTab> {
         _reservas = res;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
       setState(() => _isLoading = false);
+      // Se der erro, joga um aviso vermelho na tela para a gente ver o motivo
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao buscar reservas: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  // NOVA FUNÇÃO: Lógica para cancelar reserva com confirmação
+  Future<void> _cancelarReserva(int reservaId) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Cancelar Reserva',
+          style: GoogleFonts.bebasNeue(
+              fontSize: 22, color: AppColors.dark, letterSpacing: 1),
+        ),
+        content: Text(
+          'Tem certeza que deseja cancelar esta reserva? Esta ação não pode ser desfeita.',
+          style: GoogleFonts.dmSans(fontSize: 15),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Não',
+                style: GoogleFonts.dmSans(
+                    color: AppColors.gray, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Sim, cancelar',
+                style: GoogleFonts.dmSans(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      try {
+        await ReservaService.cancelarReserva(reservaId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Reserva cancelada com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _loadReservas(); // Recarrega a lista para sumir com o card
+        }
+      } catch (e) {
+        if (mounted) {
+          final errorMessage = e.toString().replaceFirst('Exception: ', '');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(errorMessage), backgroundColor: AppColors.error),
+          );
+        }
+      }
     }
   }
 
@@ -859,6 +1179,10 @@ class _MinhasReservasTabState extends State<MinhasReservasTab> {
         final r = _reservas[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppColors.grayLight),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -866,45 +1190,66 @@ class _MinhasReservasTabState extends State<MinhasReservasTab> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.event),
+                    const Icon(Icons.event, color: AppColors.dark),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Data: ${r.data}',
                         style: GoogleFonts.dmSans(
                           fontWeight: FontWeight.bold,
+                          color: AppColors.dark,
                         ),
                       ),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   'Quadra: ${r.quadraId}',
-                  style: GoogleFonts.dmSans(),
+                  style: GoogleFonts.dmSans(color: AppColors.dark),
                 ),
-
                 Text(
-                  '${Reserva.formatarHora(r.horaInicio)} às '
-                  '${Reserva.formatarHora(r.horaFim)}',
+                  '${Reserva.formatarHora(r.horaInicio)} às ${Reserva.formatarHora(r.horaFim)}',
                   style: GoogleFonts.dmSans(
                     color: AppColors.gray,
                   ),
                 ),
+                const SizedBox(height: 16),
 
-                const SizedBox(height: 12),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.sports_soccer),
-                    label: const Text('Criar Partida'),
-                    onPressed: () {
-                      context.push('/criar-partida/${r.id}');
-                    },
-                  ),
+                // NOVO: Row com os dois botões dividindo o espaço
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.cancel_outlined, size: 18),
+                        label: const Text('Cancelar'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: const BorderSide(color: Colors.redAccent),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () => _cancelarReserva(r.id),
+                      ),
+                    ),
+                    const SizedBox(width: 8), // Espaçamento entre os botões
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.sports_soccer, size: 18),
+                        label: const Text('Criar Partida'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () {
+                          context.push('/criar-partida/${r.id}');
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -255,15 +255,35 @@ export const cancelarReserva = async (req: Request, res: Response) => {
       return res.status(403).json({ message: "Você não tem permissão para cancelar esta reserva." });
     }
 
-    // 3. Deleta a reserva
-    await prisma.reserva.delete({
-      where: { id: reservaId },
+    // 3. Limpeza do banco de dados usando Transação
+    await prisma.$transaction(async (tx) => {
+        // Verifica se existe uma partida vinculada a essa reserva
+        const partida = await tx.partida.findFirst({
+            where: { reserva_id: reservaId }
+        });
+
+        if (partida) {
+            // Remove todos os jogadores da partida
+            await tx.usuariosPartida.deleteMany({
+                where: { partida_id: partida.id }
+            });
+            
+            // Deleta a partida
+            await tx.partida.delete({
+                where: { id: partida.id }
+            });
+        }
+
+        // 4. Agora sim, deleta a reserva em segurança!
+        await tx.reserva.delete({
+            where: { id: reservaId },
+        });
     });
 
     return res.status(200).json({ message: "Reserva cancelada com sucesso." });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Erro ao cancelar a reserva." });
+    console.error("Erro ao cancelar reserva:", error);
+    return res.status(500).json({ message: "Erro ao cancelar a reserva. Verifique se há conflitos." });
   }
 };
 

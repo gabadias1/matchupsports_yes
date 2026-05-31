@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 
 class SessionManager {
   static final SessionManager _instance = SessionManager._internal();
-  
+
   factory SessionManager() {
     return _instance;
   }
@@ -17,19 +17,20 @@ class SessionManager {
   final Map<String, AuthContext> _sessions = {};
   String? _activeSessionId;
 
-  Future<void> _loadSessions() async {
+  // CORREÇÃO: Tiramos o underline para deixar a função pública e acessível pelas telas!
+  Future<void> loadSessions() async {
     final prefs = await SharedPreferences.getInstance();
     final sessionsJson = prefs.getString('auth_sessions');
-    
+
     if (sessionsJson != null) {
       try {
         final decoded = jsonDecode(sessionsJson) as Map<String, dynamic>;
         _sessions.clear();
-        
+
         decoded.forEach((key, value) {
           _sessions[key] = AuthContext.fromMap(value);
         });
-        
+
         _activeSessionId = prefs.getString('active_session_id');
       } catch (e) {
         print('Erro ao carregar sessões: $e');
@@ -39,11 +40,10 @@ class SessionManager {
 
   Future<void> _saveSessions() async {
     final prefs = await SharedPreferences.getInstance();
-    final sessionsJson = jsonEncode(
-      _sessions.map((key, value) => MapEntry(key, value.toMap()))
-    );
+    final sessionsJson =
+        jsonEncode(_sessions.map((key, value) => MapEntry(key, value.toMap())));
     await prefs.setString('auth_sessions', sessionsJson);
-    
+
     if (_activeSessionId != null) {
       await prefs.setString('active_session_id', _activeSessionId!);
     }
@@ -54,8 +54,8 @@ class SessionManager {
     required int tipo,
     required int userId,
   }) async {
-    await _loadSessions();
-    
+    await loadSessions(); // Atualizado
+
     final sessionId = const Uuid().v4();
     final context = AuthContext(
       sessionId: sessionId,
@@ -64,17 +64,17 @@ class SessionManager {
       userId: userId,
       createdAt: DateTime.now(),
     );
-    
+
     _sessions[sessionId] = context;
     _activeSessionId = sessionId;
-    
+
     await _saveSessions();
     return sessionId;
   }
 
   Future<void> setActiveSession(String sessionId) async {
-    await _loadSessions();
-    
+    await loadSessions(); // Atualizado
+
     if (_sessions.containsKey(sessionId)) {
       _activeSessionId = sessionId;
       final prefs = await SharedPreferences.getInstance();
@@ -94,20 +94,20 @@ class SessionManager {
   }
 
   Future<void> removeSession(String sessionId) async {
-    await _loadSessions();
+    await loadSessions(); // Atualizado
     _sessions.remove(sessionId);
-    
+
     if (_activeSessionId == sessionId) {
       _activeSessionId = _sessions.isEmpty ? null : _sessions.keys.first;
     }
-    
+
     await _saveSessions();
   }
 
   Future<void> clearAllSessions() async {
     _sessions.clear();
     _activeSessionId = null;
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_sessions');
     await prefs.remove('active_session_id');

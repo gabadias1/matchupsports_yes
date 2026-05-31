@@ -120,7 +120,12 @@ export const sairPartida = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     try {
         await prisma.usuariosPartida.delete({
-            where: { usuarioId_partidaId: { usuarioId: Number(userId), partidaId: Number(partidaId) } },
+            where: { 
+                usuario_id_partida_id: { // <-- Corrigido para snake_case
+                    usuario_id: Number(userId), 
+                    partida_id: Number(partidaId) 
+                } 
+            },
         });
         await prisma.partida.update({
             where: { id: Number(partidaId) },
@@ -128,6 +133,8 @@ export const sairPartida = async (req: Request, res: Response) => {
         });
         return res.status(200).json({ message: "Saiu da partida com sucesso." });
     } catch (error) {
+        // Coloquei um console.log aqui pra caso dê erro no futuro, você ver o motivo no terminal do Node
+        console.error("Erro no sairPartida:", error); 
         return res.status(400).json({
             message: "Erro ao sair da partida. Verifique os dados e tente novamente.",
         });
@@ -184,7 +191,11 @@ export const getMatchesDisponiveis = async (req: Request, res: Response) => {
                         },
                     },
                 },
-                usuariosPartida: true,
+                usuariosPartida: {
+                    include: {
+                        usuario: true,
+                    },
+                },
             },
             orderBy: {
                 created_at: "desc",

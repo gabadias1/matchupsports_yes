@@ -10,18 +10,13 @@ import partidaRoutes from "./routes/partidaRoutes";
 import conviteRoutes from "./routes/conviteRoutes";
 import { getMatchesDisponiveis } from "./controllers/partidaController";
 import swaggerUi from "swagger-ui-express";
-import { setupSwagger, swaggerSpec } from "./config/swagger";
-import reservaRouter from "./routes/reservaRoute";
-
+import { setupSwagger } from "./config/swagger";
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use("/reservas", reservaRouter);
 
 // Swagger
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 
 // Rotas
 app.use("/usuarios", usuarioRoutes);
@@ -29,7 +24,7 @@ app.use("/estabelecimentos", estabelecimentoRoutes);
 app.use("/quadras", quadraRoutes);
 app.use("/autenticacao", autenticacaoRoutes);
 app.use("/disponibilidades", disponibilidadeRoutes);
-app.use("/reservas", reservaRoutes);
+app.use("/reservas", reservaRoutes); // Apenas uma declaração para reservas
 app.use("/partidas", partidaRoutes);
 app.use("/convites", conviteRoutes);
 

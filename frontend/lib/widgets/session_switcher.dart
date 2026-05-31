@@ -22,7 +22,8 @@ class _SessionSwitcherState extends State<SessionSwitcher> {
   @override
   void initState() {
     super.initState();
-    _loadSessions = _sessionManager._loadSessions();
+    // CORREÇÃO AQUI: Retirado o "_" do método loadSessions()
+    _loadSessions = _sessionManager.loadSessions();
   }
 
   @override
@@ -58,14 +59,16 @@ class _SessionSwitcherState extends State<SessionSwitcher> {
                 ),
                 const SizedBox(width: 8),
                 ...sessions.map((session) {
-                  final isActive = session.sessionId == activeSession?.sessionId;
+                  final isActive =
+                      session.sessionId == activeSession?.sessionId;
                   final tipoLabel = session.tipo == 0 ? 'Jogador' : 'Dono';
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: GestureDetector(
                       onTap: () async {
-                        await _sessionManager.setActiveSession(session.sessionId);
+                        await _sessionManager
+                            .setActiveSession(session.sessionId);
                         widget.onSessionChanged();
                         setState(() {});
                       },
@@ -80,9 +83,8 @@ class _SessionSwitcherState extends State<SessionSwitcher> {
                               : AppColors.grayLight,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isActive
-                                ? AppColors.primary
-                                : AppColors.gray,
+                            color:
+                                isActive ? AppColors.primary : AppColors.gray,
                             width: 1,
                           ),
                         ),
@@ -91,9 +93,7 @@ class _SessionSwitcherState extends State<SessionSwitcher> {
                           style: GoogleFonts.dmSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isActive
-                                ? AppColors.white
-                                : AppColors.dark,
+                            color: isActive ? AppColors.white : AppColors.dark,
                           ),
                         ),
                       ),
