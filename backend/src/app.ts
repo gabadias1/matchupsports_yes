@@ -8,6 +8,7 @@ import disponibilidadeRoutes from "./routes/disponibilidadeRoutes";
 import reservaRoutes from "./routes/reservaRoutes";
 import partidaRoutes from "./routes/partidaRoutes";
 import conviteRoutes from "./routes/conviteRoutes";
+import { getMatchesDisponiveis } from "./controllers/partidaController";
 import swaggerUi from "swagger-ui-express";
 import { setupSwagger, swaggerSpec } from "./config/swagger";
 import reservaRouter from "./routes/reservaRoute";
@@ -31,6 +32,8 @@ app.use("/disponibilidades", disponibilidadeRoutes);
 app.use("/reservas", reservaRoutes);
 app.use("/partidas", partidaRoutes);
 app.use("/convites", conviteRoutes);
+
+app.get("/match", getMatchesDisponiveis);
 
 app.get("/", (req, res) => {
   res.send("Backend rodando! 🚀");

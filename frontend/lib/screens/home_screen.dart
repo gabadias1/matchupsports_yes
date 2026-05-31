@@ -3,9 +3,12 @@ import 'package:match_up_sports/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/services/auth_service.dart';
+import 'package:match_up_sports/services/partida_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/widgets/app_widgets.dart';
+import 'package:match_up_sports/widgets/session_switcher.dart';
 import 'package:match_up_sports/models/reserva.dart';
+import 'package:match_up_sports/models/partida.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
 import 'package:match_up_sports/services/reserva_service.dart';
 
@@ -76,22 +79,35 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: IndexedStack(
-          index: _currentTab,
+        child: Column(
           children: [
-            _HomeTab(
-              selectedSport: _selectedSport,
-              priceRange: _priceRange,
-              filteredCourts: _filteredCourts,
-              onSportSelected: (sport) =>
-                  setState(() => _selectedSport = sport),
-              onPriceChanged: (range) =>
-                  setState(() => _priceRange = range),
-              isLoading: _isLoading,
+            SessionSwitcher(
+              onSessionChanged: () {
+                setState(() {
+                  _loadQuadras();
+                });
+              },
             ),
-            _MatchTab(),
-            const MinhasReservasTab(), 
-            const _PerfilTab(),
+            Expanded(
+              child: IndexedStack(
+                index: _currentTab,
+                children: [
+                  _HomeTab(
+                    selectedSport: _selectedSport,
+                    priceRange: _priceRange,
+                    filteredCourts: _filteredCourts,
+                    onSportSelected: (sport) =>
+                        setState(() => _selectedSport = sport),
+                    onPriceChanged: (range) =>
+                        setState(() => _priceRange = range),
+                    isLoading: _isLoading,
+                  ),
+                  _MatchTab(),
+                  const MinhasReservasTab(), 
+                  const _PerfilTab(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -597,28 +613,183 @@ class _HomeTabState extends State<_HomeTab> {
 }
 
 // ── Aba Match ─────────────────────────────────────────────────────────────────
-class _MatchTab extends StatelessWidget {
+class _MatchTab extends StatefulWidget {
+  const _MatchTab({super.key});
+
+  @override
+  State<_MatchTab> createState() => _MatchTabState();
+}
+
+class _MatchTabState extends State<_MatchTab> {
+  List<Partida> _partidas = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPartidas();
+  }
+
+  Future<void> _loadPartidas() async {
+    try {
+      final partidas = await PartidaService.obterPartidasDisponiveis();
+      setState(() {
+        _partidas = partidas;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao carregar partidas: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('⚡', style: TextStyle(fontSize: 56)),
-          const SizedBox(height: 16),
-          Text(
-            'Sistema Match',
-            style: GoogleFonts.bebasNeue(
-                fontSize: 32, color: AppColors.dark, letterSpacing: 1),
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_partidas.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('⚡', style: TextStyle(fontSize: 56)),
+            const SizedBox(height: 16),
+            Text(
+              'Nenhuma partida disponível',
+              style: GoogleFonts.bebasNeue(
+                  fontSize: 24, color: AppColors.dark, letterSpacing: 1),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Volte em breve!',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.gray),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Container(
+            color: AppColors.dark,
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Partidas Disponíveis',
+                  style: GoogleFonts.bebasNeue(
+                    fontSize: 28,
+                    color: AppColors.white,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${_partidas.length} partida(s) aberta(s)',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 13,
+                    color: AppColors.gray,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Em breve: encontre jogadores\ne complete seu time!',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.dmSans(fontSize: 15, color: AppColors.gray),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final partida = _partidas[index];
+                final vagasDisponiveis =
+                    partida.vagas - partida.quantidade_atual;
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(
+                      color: AppColors.grayLight,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Partida #${partida.id}',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.dark,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: vagasDisponiveis > 0
+                                    ? AppColors.primary
+                                    : AppColors.gray,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '$vagasDisponiveis vaga${vagasDisponiveis != 1 ? 's' : ''}',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.people,
+                              size: 16,
+                              color: AppColors.gray,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${partida.quantidade_atual}/${partida.vagas} jogadores',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 13,
+                                color: AppColors.gray,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              childCount: _partidas.length,
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

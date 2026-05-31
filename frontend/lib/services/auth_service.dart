@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:match_up_sports/services/session_manager.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -12,6 +13,7 @@ class AuthService {
 
   final Dio _dio = Dio();
   final String _baseUrl = 'http://localhost:3000/autenticacao';
+  final SessionManager _sessionManager = SessionManager();
 
   Future<int?> login(String email, String senha) async {
     try {
@@ -24,9 +26,14 @@ class AuthService {
         final token = response.data['token'];
         final tipo = response.data['usuario']['tipo'];
         final id = response.data['usuario']['id'];
-        await _saveToken(token);
-        await _saveTipo(tipo);
-        await _saveUserId(id);
+        
+        // Cria uma nova sessão ao invés de sobrescrever a atual
+        await _sessionManager.createSession(
+          token: token,
+          tipo: tipo,
+          userId: id,
+        );
+        
         return tipo;
       }
       throw Exception('Falha no login. Tente novamente.');
@@ -69,39 +76,32 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-    await prefs.remove('user_tipo');
-    await prefs.remove('user_id');
+    final activeSession = _sessionManager.getActiveSession();
+    if (activeSession != null) {
+      await _sessionManager.removeSession(activeSession.sessionId);
+    }
   }
 
-  Future<void> _saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
+  Future<void> logoutAll() async {
+    await _sessionManager.clearAllSessions();
   }
 
   Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
-  }
-
-  Future<void> _saveTipo(int tipo) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('user_tipo', tipo);
+    final activeSession = _sessionManager.getActiveSession();
+    return activeSession?.token;
   }
 
   Future<int?> getTipo() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('user_tipo');
-  }
-
-  Future<void> _saveUserId(int id) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('user_id', id);
+    final activeSession = _sessionManager.getActiveSession();
+    return activeSession?.tipo;
   }
 
   Future<int?> getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('user_id');
+    final activeSession = _sessionManager.getActiveSession();
+    return activeSession?.userId;
+  }
+
+  SessionManager getSessionManager() {
+    return _sessionManager;
   }
 }
