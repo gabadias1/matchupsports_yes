@@ -15,14 +15,21 @@ class ReservaService {
   }) async {
     try {
       final token = await _authService.getToken();
-      _dio.options.headers['Authorization'] = 'Bearer $token';
 
-      final response = await _dio.post('', data: {
-        'quadra_id': quadraId,
-        'data': data,
-        'hora_inicio': horaInicio,
-        'hora_fim': horaFim,
-      });
+      final response = await _dio.post(
+        '', 
+        data: {
+          'quadra_id': quadraId,
+          'data': data,
+          'hora_inicio': horaInicio,
+          'hora_fim': horaFim,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
 
       return Reserva.fromJson(response.data);
     } on DioException catch (e) {
@@ -36,8 +43,16 @@ class ReservaService {
   static Future<List<Reserva>> getMinhasReservas() async {
     try {
       final token = await _authService.getToken();
-      _dio.options.headers['Authorization'] = 'Bearer $token';
-      final response = await _dio.get('/minhas');
+      
+      final response = await _dio.get(
+        '/minhas',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
       return (response.data as List)
           .map((json) => Reserva.fromJson(json))
           .toList();
@@ -46,16 +61,25 @@ class ReservaService {
     }
   }
 
+  // Método que sua tela de dono usa para renderizar as reservas recebidas
   static Future<List<Reserva>> getReservasDonoQuadras() async {
     try {
       final token = await _authService.getToken();
-      _dio.options.headers['Authorization'] = 'Bearer $token';
-      final response = await _dio.get('/dono');
+      
+      final response = await _dio.get(
+        '/dono',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      
       return (response.data as List)
           .map((json) => Reserva.fromJson(json))
           .toList();
     } on DioException catch (e) {
-      throw Exception('Erro ao buscar reservas: ${e.message}');
+      throw Exception('Erro ao buscar reservas do dono: ${e.message}');
     }
   }
 
@@ -79,8 +103,15 @@ class ReservaService {
   static Future<void> cancelarReserva(int reservaId) async {
     try {
       final token = await _authService.getToken();
-      _dio.options.headers['Authorization'] = 'Bearer $token';
-      await _dio.delete('/$reservaId');
+      
+      await _dio.delete(
+        '/$reservaId',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
     } on DioException catch (e) {
       throw Exception('Erro ao cancelar reserva: ${e.message}');
     }
