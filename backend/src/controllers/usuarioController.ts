@@ -2,7 +2,50 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma";
 
-// create usuário foi para autenticacaoController.ts
+// Configuração estendida para incluir os relacionamentos que o Flutter precisa carregar no perfil
+const usuarioIncludeConfig = {
+  include: {
+    estabelecimentos: {
+      include: {
+        quadras: true,
+      },
+    },
+    reservas: {
+      include: {
+        quadra: {
+          include: {
+            estabelecimento: true,
+          },
+        },
+      },
+    },
+  },
+};
+
+// GET /usuarios/me - Retorna os dados do usuário logado (Injetado via Token no Middleware)
+export const getMe = async (req: Request, res: Response) => {
+  try {
+    // O autenticacaoMiddleware injeta o id do usuário logado dentro de req.user.id
+    const userId = (req as any).user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Usuário não autenticado" });
+    }
+
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: Number(userId) },
+      ...usuarioIncludeConfig, // Traz estabelecimentos, quadras e reservas juntos
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    return res.json(usuario);
+  } catch (error) {
+    return res.status(500).json({ message: "Erro interno ao buscar perfil" });
+  }
+};
 
 export const updateUsuario = async (req: Request, res: Response) => {
   const { nome, email, celular, senha, tipo } = req.body;
@@ -28,9 +71,8 @@ export const updateUsuario = async (req: Request, res: Response) => {
 };
 
 export const deleteUsuario = async (req: Request, res: Response) => {
-
   try {
-    const usuario = await prisma.usuario.delete({
+    await prisma.usuario.delete({
       where: { id: Number(req.params.id) }
     });
 
@@ -42,18 +84,18 @@ export const deleteUsuario = async (req: Request, res: Response) => {
 
 export const getUsuario = async (req: Request, res: Response) => {
   const usuario = await prisma.usuario.findUnique({
-    where: { id: Number(req.params.id) }
+    where: { id: Number(req.params.id) },
+    ...usuarioIncludeConfig, // Atualizado para incluir as relações também por ID comum se precisar
   });
   
   if (!usuario) {
     return res.status(404).json({ message: "Usuário não encontrado" });
   }
 
-  res.json(usuario);
+  return res.json(usuario);
 };
 
 export const getUsuarios = async (req: Request, res: Response) => {
   const usuarios = await prisma.usuario.findMany();
-  
-  res.json(usuarios);
+  return res.json(usuarios);
 };

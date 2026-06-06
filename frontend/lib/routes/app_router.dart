@@ -9,6 +9,7 @@ import 'package:match_up_sports/screens/splash_screen.dart';
 import 'package:match_up_sports/screens/quadras_screen.dart';
 import 'package:match_up_sports/screens/criar_quadra_screen.dart';
 import 'package:match_up_sports/screens/criar_estabelecimento_screen.dart';
+import 'package:match_up_sports/screens/perfil_screen.dart'; // Mantido seu import
 
 class AppRoutes {
   static const splash = '/';
@@ -36,6 +37,10 @@ final appRouter = GoRouter(
       builder: (context, state) => const HomeScreen(),
     ),
     GoRoute(
+      path: AppRoutes.perfil,
+      builder: (context, state) => const PerfilScreen(), // Mantida sua rota de perfil
+    ),
+    GoRoute(
       path: AppRoutes.login,
       builder: (context, state) => const LoginScreen(),
     ),
@@ -61,15 +66,15 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutes.criarDisponibilidade,
-        builder: (context, state) {
-          final quadraId = int.parse(
-            state.pathParameters['quadraId']!,
-          );
+      builder: (context, state) {
+        final quadraId = int.parse(
+          state.pathParameters['quadraId']!,
+        );
 
-          return CriarDisponibilidadeQuadraScreen(
-            quadraId: quadraId,
-          );
-        },
+        return CriarDisponibilidadeQuadraScreen(
+          quadraId: quadraId,
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.criarPartida,
