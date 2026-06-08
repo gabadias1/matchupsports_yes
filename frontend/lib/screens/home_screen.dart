@@ -11,6 +11,7 @@ import 'package:match_up_sports/models/reserva.dart';
 import 'package:match_up_sports/models/partida.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
 import 'package:match_up_sports/services/reserva_service.dart';
+import 'package:flutter/services.dart';
 import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
@@ -23,6 +24,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final GlobalKey<_MatchTabState> _matchTabKey = GlobalKey<_MatchTabState>();
+  final GlobalKey<_MinhasReservasTabState> _reservasTabKey =
+    GlobalKey<_MinhasReservasTabState>();
+
   late int _currentTab;
   String _selectedSport = 'Todos';
   RangeValues _priceRange = const RangeValues(10, 200);
@@ -101,10 +106,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         setState(() => _selectedSport = sport),
                     onPriceChanged: (range) =>
                         setState(() => _priceRange = range),
+                    onReservaCriada: () async {
+                      await _reservasTabKey.currentState?.refreshReservas();
+                    },
                     isLoading: _isLoading,
                   ),
-                  _MatchTab(),
-                  const MinhasReservasTab(),
+                  _MatchTab(key: _matchTabKey),
+                  MinhasReservasTab(key: _reservasTabKey),
                   const _PerfilTab(),
                 ],
               ),
@@ -167,6 +175,7 @@ class _HomeTab extends StatefulWidget {
   final List<Map<String, dynamic>> filteredCourts;
   final Function(String) onSportSelected;
   final Function(RangeValues) onPriceChanged;
+  final Future<void> Function()? onReservaCriada;
   final bool isLoading;
 
   const _HomeTab({
@@ -176,6 +185,7 @@ class _HomeTab extends StatefulWidget {
     required this.onSportSelected,
     required this.onPriceChanged,
     required this.isLoading,
+    this.onReservaCriada,
   });
 
   @override
@@ -620,6 +630,11 @@ class _HomeTabState extends State<_HomeTab> {
                       horaInicio: hi,
                       horaFim: hf,
                     );
+                    await widget.onReservaCriada?.call();
+                    await (context.findAncestorStateOfType<_HomeScreenState>())
+                        ?._reservasTabKey
+                        .currentState
+                        ?.refreshReservas();
                     Navigator.of(ctx).pop();
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text('Reserva criada com sucesso')));
@@ -658,6 +673,10 @@ class _MatchTabState extends State<_MatchTab> {
   void initState() {
     super.initState();
     _carregarDadosIniciais();
+  }
+
+  Future<void> refreshPartidas() async {
+    await _loadPartidas();
   }
 
   // Carrega o ID do usuário logado lendo o Token antes de puxar as partidas
@@ -808,6 +827,135 @@ class _MatchTabState extends State<_MatchTab> {
     );
   }
 
+  void _mostrarJogadoresGerenciavel(
+    BuildContext context,
+    Partida partida,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return ListView.builder(
+          itemCount: partida.nomesJogadores.length,
+          itemBuilder: (_, i) {
+
+            return ListTile(
+              leading: const Icon(Icons.person),
+              title: Text(partida.nomesJogadores[i]),
+
+              trailing: partida.idsUsuarios[i] == partida.criadorId
+                  ? const Text("Dono")
+                  : IconButton(
+                      icon: const Icon(
+                        Icons.person_remove,
+                        color: Colors.red,
+                      ),
+                      onPressed: () async {
+                        await PartidaService.removerJogador(
+                          partida.id,
+                          partida.idsUsuarios[i],
+                        );
+
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Jogador removido da partida.'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
+
+                        Navigator.pop(context);
+
+                        await _loadPartidas();
+                      },
+                    ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _alterarTipoPartida(
+    int partidaId,
+    String tipo,
+  ) async {
+    try {
+      await PartidaService.alterarTipo(
+        partidaId,
+        tipo,
+      );
+
+      await _loadPartidas();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              tipo == 'ABERTA'
+                  ? 'Partida aberta para novos jogadores.'
+                  : 'Partida fechada para novos jogadores.',
+            ),
+            backgroundColor: tipo == 'ABERTA' ? Colors.green : Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
+  Future<void> _gerarConvite(int partidaId) async {
+    try {
+      final convite = await PartidaService.gerarConvite(partidaId);
+      await Clipboard.setData(ClipboardData(text: convite));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Convite copiado para a área de transferência!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao gerar convite: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelarPartida(int partidaId) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Cancelar partida'),
+        content: const Text(
+          'Deseja realmente cancelar esta partida?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Não'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Sim'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    // await PartidaService.cancelarPartida(partidaId);
+
+    await _loadPartidas();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -879,7 +1027,7 @@ class _MatchTabState extends State<_MatchTab> {
                 final bool isCheia = vagasDisponiveis <= 0;
                 final bool estaNaPartida = _meuUserId != null &&
                     partida.idsUsuarios.contains(_meuUserId);
-
+                final bool souDono = _meuUserId == partida.criadorId;
                 return Card(
                   margin: const EdgeInsets.only(bottom: 16),
                   shape: RoundedRectangleBorder(
@@ -896,12 +1044,10 @@ class _MatchTabState extends State<_MatchTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
                                 child: Text(
-                                  partida.quadraNome ??
-                                      'Partida #${partida.id}',
+                                  partida.quadraNome ?? 'Partida #${partida.id}',
                                   style: GoogleFonts.dmSans(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -909,6 +1055,60 @@ class _MatchTabState extends State<_MatchTab> {
                                   ),
                                 ),
                               ),
+
+                              if (souDono)
+                                PopupMenuButton<String>(
+                                  icon: const Icon(Icons.more_vert),
+                                  onSelected: (value) async {
+                                    switch (value) {
+                                      case 'abrir':
+                                        await _alterarTipoPartida(partida.id, 'ABERTA');
+                                        break;
+
+                                      case 'fechar':
+                                        await _alterarTipoPartida(partida.id, 'FECHADA');
+                                        break;
+
+                                      case 'convite':
+                                        await _gerarConvite(partida.id);
+                                        break;
+
+                                      case 'cancelar':
+                                        await _cancelarPartida(partida.id);
+                                        break;
+
+                                      case 'gerenciar':
+                                        _mostrarJogadoresGerenciavel(context, partida);
+                                        break;
+                                    }
+                                  },
+                                  itemBuilder: (_) => [
+                                    const PopupMenuItem(
+                                      value: 'abrir',
+                                      child: Text('Abrir partida'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'fechar',
+                                      child: Text('Fechar partida'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'gerenciar',
+                                      child: Text('Gerenciar jogadores'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'convite',
+                                      child: Text('Gerar convite'),
+                                    ),
+                                    const PopupMenuDivider(),
+                                    const PopupMenuItem(
+                                      value: 'cancelar',
+                                      child: Text(
+                                        'Cancelar partida',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 6),
@@ -983,7 +1183,32 @@ class _MatchTabState extends State<_MatchTab> {
                               ),
                             ],
                           ),
-
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.sports_soccer_outlined,
+                                  size: 16, color: AppColors.gray),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Esporte: ${partida.esporte ?? 'Não informado'}',
+                                style: GoogleFonts.dmSans(
+                                    fontSize: 13, color: AppColors.gray),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.door_front_door_outlined,
+                                  size: 16, color: AppColors.gray),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Tipo: ${partida.tipo.toString().split('.').last.toLowerCase() == 'aberta' ? 'Aberta' : 'Fechada'}',
+                                style: GoogleFonts.dmSans(
+                                    fontSize: 13, color: AppColors.gray),
+                              ),
+                            ],
+                          ),
                           // Divisor e Botão Inteligente (Entrar/Sair)
                           const SizedBox(height: 16),
                           const Divider(height: 1, color: AppColors.grayLight),
@@ -1062,6 +1287,10 @@ class _MinhasReservasTabState extends State<MinhasReservasTab> {
     _loadReservas();
   }
 
+  Future<void> refreshReservas() async {
+    await _loadReservas();
+  }
+
   Future<void> _loadReservas() async {
     try {
       final res = await ReservaService.getMinhasReservas();
@@ -1130,7 +1359,7 @@ class _MinhasReservasTabState extends State<MinhasReservasTab> {
               backgroundColor: Colors.green,
             ),
           );
-          _loadReservas(); // Recarrega a lista para sumir com o card
+          await refreshReservas(); // Recarrega a lista para sumir com o card
         }
       } catch (e) {
         if (mounted) {
@@ -1244,8 +1473,15 @@ class _MinhasReservasTabState extends State<MinhasReservasTab> {
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8)),
                         ),
-                        onPressed: () {
-                          context.push('/criar-partida/${r.id}');
+                        onPressed: () async {
+                          final result = await context.push('/criar-partida/${r.id}');
+
+                          if (result == true) {
+                            await (context.findAncestorStateOfType<_HomeScreenState>())
+                                ?._matchTabKey
+                                .currentState
+                                ?.refreshPartidas();
+                          }
                         },
                       ),
                     ),

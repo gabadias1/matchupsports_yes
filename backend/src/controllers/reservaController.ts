@@ -327,3 +327,47 @@ export const getReservasDonoQuadras = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Erro ao buscar reservas." });
   }
 };
+
+export const confirmarReserva = async (reservaId: number) => {
+    try {
+        const reserva = await prisma.reserva.findUniqueOrThrow({
+            where: { id: reservaId },
+        });
+
+        if (reserva.status === "CONFIRMADA") {
+            return { success: false, message: "Reserva já está confirmada." };
+        }
+
+        await prisma.reserva.update({
+            where: { id: reservaId },
+            data: { status: "CONFIRMADA" },
+        });
+
+        return { success: true, message: "Reserva confirmada com sucesso." };
+    } catch (error) {
+        console.error("Erro ao confirmar reserva:", error);
+        return { success: false, message: "Erro ao confirmar a reserva." };
+    }
+};
+
+export const cancelarReservaDono = async (reservaId: number) => {
+    try {
+        const reserva = await prisma.reserva.findUniqueOrThrow({
+            where: { id: reservaId },
+        });
+
+        if (reserva.status === "CANCELADA") {
+            return { success: false, message: "Reserva já está cancelada." };
+        }
+
+        await prisma.reserva.update({
+            where: { id: reservaId },
+            data: { status: "CANCELADA" },
+        });
+
+        return { success: true, message: "Reserva cancelada com sucesso." };
+    } catch (error) {
+        console.error("Erro ao cancelar reserva:", error);
+        return { success: false, message: "Erro ao cancelar a reserva." };
+    }
+};

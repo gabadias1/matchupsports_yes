@@ -10,6 +10,12 @@ export const createPartida = async (req: Request, res: Response) => {
             where: { id: reserva_id },
         });
 
+        if (reserva.status !== "CONFIRMADA") {
+            return res.status(400).json({
+                message: "A reserva deve estar confirmada para criar uma partida.",
+            });
+        }
+
         const partidaExistente = await prisma.partida.findFirst({
             where: { reserva_id: reserva.id },
         });
@@ -144,7 +150,7 @@ export const sairPartida = async (req: Request, res: Response) => {
 export const getPartidasAbertas = async (req: Request, res: Response) => {
     try {
         const partidas = await prisma.partida.findMany({
-            where: { status: "ABERTA" },
+            where: { tipo: "ABERTA" },
         });
         return res.status(200).json(partidas);
     } catch (error) {
@@ -154,31 +160,11 @@ export const getPartidasAbertas = async (req: Request, res: Response) => {
     }
 };
 
-export const getMinhasPartidas = async (req: Request, res: Response) => {
-    const userId = req.user?.id;
-    try {
-        const partidas = await prisma.partida.findMany({
-            where: {
-                usuariosPartida: {
-                    some: {
-                        usuario_id: Number(userId),
-                    },
-                },
-            },
-        });
-        return res.status(200).json(partidas);
-    } catch (error) {
-        return res.status(400).json({
-            message: "Erro ao buscar suas partidas. Tente novamente mais tarde.",
-        });
-    }
-};
-
 export const getMatchesDisponiveis = async (req: Request, res: Response) => {
     try {
         const partidas = await prisma.partida.findMany({
             where: {
-                status: "ABERTA",
+                tipo: "ABERTA",
             },
             include: {
                 criador: true,
@@ -205,6 +191,97 @@ export const getMatchesDisponiveis = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(400).json({
             message: "Erro ao buscar partidas disponíveis. Tente novamente mais tarde.",
+        });
+    }
+};
+
+export const alterarTipoPartida = async (req: Request, res: Response) => {
+    const { partidaId } = req.params;
+    const { tipo } = req.body;
+    try {
+        const partidaAtualizada = await prisma.partida.update({
+            where: { id: Number(partidaId) },
+            data: { tipo },
+        });
+        return res.status(200).json(partidaAtualizada);
+    } catch (error) {
+        return res.status(400).json({
+            message: "Erro ao atualizar tipo da partida. Tente novamente mais tarde.",
+        });
+    }
+};
+
+export const getMinhasPartidas = async (req: Request, res: Response) => {
+    const userId = req.user?.id;
+    try {
+        const partidas = await prisma.partida.findMany({
+            where: { criador_id: Number(userId) },
+                include: {
+                    criador: true,
+                    usuariosPartida: {
+                        include: {
+                            usuario: true,
+                        },
+                    },
+                    reserva: {
+                        include: {
+                            quadra: {
+                                include: {
+                                    estabelecimento: true,
+                                },
+                            },
+                        },
+                    },
+                },
+                orderBy: {
+                    created_at: "desc",
+                },
+        });
+        return res.status(200).json(partidas);
+    } catch (error) {
+        return res.status(400).json({
+            message: "Erro ao buscar suas partidas. Tente novamente mais tarde.",
+        });
+    }
+};
+
+export const removerJogadorPartida = async (req: Request, res: Response) => { 
+    const { partidaId, usuarioId } = req.params;
+    try {
+        const donoPartida = await prisma.partida.findUniqueOrThrow({
+            where: { id: Number(partidaId) },
+            select: { criador_id: true },
+        });
+
+        if (donoPartida.criador_id !== req.user?.id) {
+            return res.status(403).json({
+                message: "Apenas o criador da partida pode remover jogadores.",
+            });
+        }  
+    } catch (error) {
+        return res.status(400).json({
+            message: "Partida não encontrada.",
+        });
+    }
+    try {
+        await prisma.$transaction(async (tx) => {
+            await tx.usuariosPartida.delete({
+                where: {
+                    usuario_id_partida_id: {
+                        usuario_id: Number(usuarioId),
+                        partida_id: Number(partidaId),
+                    },
+                },
+            });
+            await tx.partida.update({
+                where: { id: Number(partidaId) },
+                data: { quantidade_atual: { decrement: 1 } },
+            });
+        });
+        return res.status(200).json({ message: "Jogador removido da partida com sucesso." });
+    } catch (error) {
+        return res.status(400).json({
+            message: "Erro ao remover jogador da partida. Verifique os dados e tente novamente.",
         });
     }
 };

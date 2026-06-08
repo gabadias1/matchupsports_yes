@@ -5,6 +5,8 @@ import {
   sairPartida,
   getMinhasPartidas,
   getPartidasAbertas,
+  alterarTipoPartida,
+  removerJogadorPartida,
 } from "../controllers/partidaController";
 
 import { autenticacaoMiddleware } from "../middleware/autenticacaoMiddleware";
@@ -74,6 +76,57 @@ router.get("/minhas", autenticacaoMiddleware, getMinhasPartidas);
  *         description: Lista de partidas abertas
  */
 router.get("/abertas", autenticacaoMiddleware, getPartidasAbertas);
+
+/**
+ * @swagger
+ * /partidas/alterarTipo/{partidaId}:
+ *   post:
+ *     summary: Alterar o tipo de uma partida
+ *     tags: [Partidas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: partidaId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 example: ENCERRADA
+ */
+router.post("/alterarTipo/:partidaId", autenticacaoMiddleware, alterarTipoPartida);
+
+/**
+ * @swagger
+ * /partidas/removerJogador/{partidaId}/{usuarioId}:
+ *   post:
+ *     summary: Remover um jogador de uma partida
+ *     tags: [Partidas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: partidaId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: usuarioId
+ *         required: true
+*         schema:
+*           type: integer
+ */
+router.post("/removerJogador/:partidaId/:usuarioId", autenticacaoMiddleware, removerJogadorPartida);
 
 /**
  * @swagger

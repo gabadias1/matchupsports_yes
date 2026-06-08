@@ -39,11 +39,11 @@ const router = Router();
  *               properties:
  *                 link:
  *                   type: string
- *                   example: http://localhost:3000/convite/abc123
+ *                   example: abc123
  *       400:
  *         description: Erro ao criar convite
  */
-router.post("/convites", autenticacaoMiddleware, criarConvite);
+router.post("/criar", autenticacaoMiddleware, criarConvite);
 
 /**
  * @swagger
@@ -93,7 +93,7 @@ router.post("/convites", autenticacaoMiddleware, criarConvite);
  *                       value: Erro ao aceitar convite. Verifique o token e tente novamente.
  */
 router.post(
-  "/convites/:token/aceitar",
+  "/:token/aceitar",
   autenticacaoMiddleware,
   aceitarConvite
 );

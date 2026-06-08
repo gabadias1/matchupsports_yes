@@ -9,16 +9,23 @@ export const criarConvite = async (req: Request, res: Response) => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
     try {
-        const convite = await prisma.convite.create({
+        const convite = await prisma.convitePartida.create({
             data: {
-                partida_id: Number(partida_id),
+                partida: {
+                    connect: {
+                        id: Number(partida_id),
+                    },
+                },
                 token: token,
                 expiresAt: expiresAt,
-                criadoPor: req.user.id,
+                criador: {
+                    connect: {
+                        id: Number(req.user.id),
+                    },
+                },
             },
         });
-        const link = `http://localhost:3000/convite/${convite.token}`;
-        return res.status(201).json({ link });
+        return res.status(201).json(token);
     } catch (error) {
         return res.status(400).json({
             message: "Erro ao criar convite. Verifique os dados e tente novamente.",
@@ -29,7 +36,7 @@ export const criarConvite = async (req: Request, res: Response) => {
 export const aceitarConvite = async (req: Request, res: Response) => {
     const { token } = req.params;
     try {
-        const convite = await prisma.convite.findUniqueOrThrow({
+        const convite = await prisma.convitePartida.findUniqueOrThrow({
             where: { token },
         });
         if (convite.expiresAt < new Date()) {
@@ -52,7 +59,7 @@ export const aceitarConvite = async (req: Request, res: Response) => {
                 where: { id: convite.partida_id },
                 data: { quantidadeAtual: { increment: 1 } },
             });
-            await prisma.convite.update({
+            await prisma.convitePartida.update({
                 where: { id: convite.id },
                 data: { usado: true },
             });
