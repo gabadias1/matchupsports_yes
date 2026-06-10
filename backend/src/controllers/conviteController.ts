@@ -49,15 +49,26 @@ export const aceitarConvite = async (req: Request, res: Response) => {
             const partida = await prisma.partida.findUniqueOrThrow({
                 where: { id: convite.partida_id },
             });
-            if (partida.quantidadeAtual >= partida.vagas) {
+            if (partida.quantidade_atual >= partida.vagas) {
                 return res.status(400).json({ message: "Partida cheia. Não é possível aceitar o convite." });
             }
             await prisma.usuariosPartida.create({
-                data: { usuarioId: Number(req.user.id), partidaId: convite.partida_id },
+                data: {
+                    usuario: {
+                        connect: {
+                            id: Number(req.user.id),
+                        },
+                    },
+                    partida: {
+                        connect: {
+                            id: convite.partida_id,
+                        },
+                    },
+                },
             });
             await prisma.partida.update({
                 where: { id: convite.partida_id },
-                data: { quantidadeAtual: { increment: 1 } },
+                data: { quantidade_atual: { increment: 1 } },
             });
             await prisma.convitePartida.update({
                 where: { id: convite.id },

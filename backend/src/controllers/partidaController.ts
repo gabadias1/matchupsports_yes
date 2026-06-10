@@ -215,27 +215,40 @@ export const getMinhasPartidas = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     try {
         const partidas = await prisma.partida.findMany({
-            where: { criador_id: Number(userId) },
+        where: {
+            OR: [
+            {
+                criador_id: userId,
+            },
+            {
+                usuariosPartida: {
+                some: {
+                    usuario_id: userId,
+                },
+                },
+            },
+            ],
+        },
+        include: {
+            criador: true,
+            reserva: {
+            include: {
+                quadra: {
                 include: {
-                    criador: true,
-                    usuariosPartida: {
-                        include: {
-                            usuario: true,
-                        },
-                    },
-                    reserva: {
-                        include: {
-                            quadra: {
-                                include: {
-                                    estabelecimento: true,
-                                },
-                            },
-                        },
-                    },
+                    estabelecimento: true,
                 },
-                orderBy: {
-                    created_at: "desc",
                 },
+            },
+            },
+            usuariosPartida: {
+            include: {
+                usuario: true,
+            },
+            },
+        },
+        orderBy: {
+            created_at: "desc",
+        },
         });
         return res.status(200).json(partidas);
     } catch (error) {
@@ -282,6 +295,53 @@ export const removerJogadorPartida = async (req: Request, res: Response) => {
     } catch (error) {
         return res.status(400).json({
             message: "Erro ao remover jogador da partida. Verifique os dados e tente novamente.",
+        });
+    }
+};
+
+export const cancelarPartida = async (req: Request, res: Response) => {
+    const { partidaId } = req.params;
+    try {
+        const donoPartida = await prisma.partida.findUniqueOrThrow({
+            where: { id: Number(partidaId) },
+            select: { criador_id: true },
+        });
+
+        if (donoPartida.criador_id !== req.user?.id) {
+            return res.status(403).json({
+                message: "Apenas o criador da partida pode cancelar.",
+            });
+        }  
+    } catch (error) {
+        return res.status(400).json({
+            message: "Partida não encontrada.",
+        });
+    }
+    try {
+        await prisma.$transaction(async (tx) => {
+            await tx.usuariosPartida.deleteMany({
+                where: {
+                    partida_id: Number(partidaId),
+                },
+            });
+
+            await tx.convitePartida.deleteMany({
+                where: {
+                    partida_id: Number(partidaId),
+                },
+            });
+
+            await tx.partida.delete({
+                where: {
+                    id: Number(partidaId),
+                },
+            });
+        });
+        return res.status(200).json({ message: "Partida cancelada com sucesso." });
+    } catch (error) {
+        console.error("Erro no cancelarPartida:", error);
+        return res.status(400).json({
+            message: "Erro ao cancelar partida. Verifique os dados e tente novamente.",
         });
     }
 };
