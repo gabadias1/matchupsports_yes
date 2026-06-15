@@ -87,16 +87,19 @@ class AuthService {
   }
 
   Future<String?> getToken() async {
+    await _sessionManager.loadSessions(); // <-- O PULO DO GATO AQUI
     final activeSession = _sessionManager.getActiveSession();
     return activeSession?.token;
   }
 
   Future<int?> getTipo() async {
+    await _sessionManager.loadSessions(); // <-- AQUI TAMBÉM
     final activeSession = _sessionManager.getActiveSession();
     return activeSession?.tipo;
   }
 
   Future<int?> getUserId() async {
+    await _sessionManager.loadSessions(); // <-- E AQUI
     final activeSession = _sessionManager.getActiveSession();
     return activeSession?.userId;
   }

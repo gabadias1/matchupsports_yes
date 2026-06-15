@@ -17,7 +17,6 @@ class SessionManager {
   final Map<String, AuthContext> _sessions = {};
   String? _activeSessionId;
 
-  // CORREÇÃO: Tiramos o underline para deixar a função pública e acessível pelas telas!
   Future<void> loadSessions() async {
     final prefs = await SharedPreferences.getInstance();
     final sessionsJson = prefs.getString('auth_sessions');

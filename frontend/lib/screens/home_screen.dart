@@ -913,13 +913,14 @@ class _MatchTabState extends State<_MatchTab> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: vagasDisponiveis > 0
-                                      ? AppColors.primary
-                                      : AppColors.gray,
+                                  // Se estiver cheia fica vermelho, senão usa a cor primária
+                                  color: isCheia ? Colors.red : AppColors.primary,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  '$vagasDisponiveis vaga${vagasDisponiveis != 1 ? 's' : ''}',
+                                  isCheia 
+                                      ? 'ESGOTADO' 
+                                      : '$vagasDisponiveis vaga${vagasDisponiveis != 1 ? 's' : ''}',
                                   style: GoogleFonts.dmSans(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -1018,9 +1019,10 @@ class _MatchTabState extends State<_MatchTab> {
                                           color: Colors.white, strokeWidth: 2),
                                     )
                                   : Text(
+                                      // Lógica de texto: Sair > Lotada > Entrar
                                       estaNaPartida
                                           ? 'Sair da Partida'
-                                          : 'Entrar na Partida',
+                                          : (isCheia ? 'Partida Lotada' : 'Entrar na Partida'),
                                       style: GoogleFonts.dmSans(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,

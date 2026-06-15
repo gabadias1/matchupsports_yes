@@ -34,7 +34,12 @@ class PartidaService {
 
   static Future<List<Partida>> obterPartidasDisponiveis() async {
     try {
-      final response = await _dio.get('/match');
+      // 1. Pegar o token (estava faltando!)
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+
+      // 2. Corrigir a rota para a que está no Swagger
+      final response = await _dio.get('/partidas/abertas');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
