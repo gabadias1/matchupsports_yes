@@ -29,6 +29,7 @@ class Partida {
   final int? horaFim;
   final String? quadraNome;
   final String? estabelecimentoNome;
+  final String? esporte; // NOVO: Tipo de esporte da quadra
 
   // Armazena a lista de IDs dos jogadores
   final List<int> idsUsuarios;
@@ -51,6 +52,7 @@ class Partida {
     this.horaFim,
     this.quadraNome,
     this.estabelecimentoNome,
+    this.esporte,
     required this.idsUsuarios,
     required this.nomesJogadores, // NOVO: Requisitado no construtor
   });
@@ -82,6 +84,7 @@ class Partida {
       quadraNome: json['reserva']?['quadra']?['identificacao'],
       estabelecimentoNome: json['reserva']?['quadra']?['estabelecimento']
           ?['nome_local'],
+      esporte: json['reserva']?['quadra']?['esporte'],
 
       // Lê o array 'usuariosPartida' que vem do Prisma e extrai só os IDs
       idsUsuarios: json['usuariosPartida'] != null

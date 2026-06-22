@@ -70,7 +70,7 @@ class _CriarPartidaScreenState
    ),
   );
 
-  context.pop();
+  context.pop(true);
   }
 
   @override

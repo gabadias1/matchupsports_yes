@@ -93,4 +93,108 @@ class PartidaService {
       throw Exception('Erro ao sair da partida');
     }
   }
+
+  static Future<void> alterarTipo(int partidaId, String tipo) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+
+      await _dio.post('/partidas/alterarTipo/$partidaId', data: {
+        'tipo': tipo,
+      });
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
+      }
+      throw Exception('Erro ao alterar tipo da partida');
+    }
+  }
+
+  static Future<void> removerJogador(int partidaId, int jogadorId) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.post('/partidas/removerJogador/$partidaId/$jogadorId');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
+      }
+    }
+  }
+
+  static Future<List<Partida>> minhas() async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      final response = await _dio.get('/partidas/minhas');
+      return (response.data as List)
+          .map((json) => Partida.fromJson(json))
+          .toList();
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
+      }
+      throw Exception('Erro ao obter minhas partidas');
+    }
+  }
+
+  static Future<void> cancelarPartida(int partidaId) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.delete('/partidas/$partidaId/cancelar');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
+      }
+      throw Exception('Erro ao cancelar partida');
+    }
+  }
+
+  static Future<String> gerarConvite(int partidaId) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      final response = await _dio.post('/convites/criar/', data: {
+        'partida_id': partidaId,
+      });
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
+      }
+      throw Exception('Erro ao gerar convite');
+    }
+  }
+
+  static Future<void> aceitarConvite(String codigo) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.post('/convites/$codigo/aceitar/');
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('message')) {
+          throw Exception(data['message']);
+        }
+      }
+    }
+  }
+
 }

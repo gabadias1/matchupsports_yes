@@ -5,6 +5,9 @@ import {
   sairPartida,
   getMinhasPartidas,
   getPartidasAbertas,
+  alterarTipoPartida,
+  removerJogadorPartida,
+  cancelarPartida,
 } from "../controllers/partidaController";
 
 import { autenticacaoMiddleware } from "../middleware/autenticacaoMiddleware";
@@ -77,6 +80,57 @@ router.get("/abertas", autenticacaoMiddleware, getPartidasAbertas);
 
 /**
  * @swagger
+ * /partidas/alterarTipo/{partidaId}:
+ *   post:
+ *     summary: Alterar o tipo de uma partida
+ *     tags: [Partidas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: partidaId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 example: ENCERRADA
+ */
+router.post("/alterarTipo/:partidaId", autenticacaoMiddleware, alterarTipoPartida);
+
+/**
+ * @swagger
+ * /partidas/removerJogador/{partidaId}/{usuarioId}:
+ *   post:
+ *     summary: Remover um jogador de uma partida
+ *     tags: [Partidas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: partidaId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: usuarioId
+ *         required: true
+*         schema:
+*           type: integer
+ */
+router.post("/removerJogador/:partidaId/:usuarioId", autenticacaoMiddleware, removerJogadorPartida);
+
+/**
+ * @swagger
  * /partidas/{partidaId}/entrar:
  *   post:
  *     summary: Entrar em uma partida
@@ -114,5 +168,25 @@ router.post("/:partidaId/entrar", autenticacaoMiddleware, entrarPartida);
  *         description: Saiu da partida
  */
 router.delete("/:partidaId/sair", autenticacaoMiddleware, sairPartida);
+
+/**
+ * @swagger
+ * /partidas/{partidaId}/cancelar:
+ *   delete:
+ *     summary: Cancelar uma partida
+ *     tags: [Partidas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: partidaId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Partida cancelada
+ */
+router.delete("/:partidaId/cancelar", autenticacaoMiddleware, cancelarPartida);
 
 export default router;

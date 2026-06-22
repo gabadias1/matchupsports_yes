@@ -116,4 +116,24 @@ class ReservaService {
       throw Exception('Erro ao cancelar reserva: ${e.message}');
     }
   }
+
+  static Future<void> confirmarReserva(int reservaId) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.put('/$reservaId/confirmar');
+    } on DioException catch (e) {
+      throw Exception('Erro ao confirmar reserva: ${e.message}');
+    }
+  }
+  
+  static Future<void> recusarReserva(int reservaId) async {
+    try {
+      final token = await _authService.getToken();
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      await _dio.put('/$reservaId/recusar');
+    } on DioException catch (e) {
+      throw Exception('Erro ao recusar reserva: ${e.message}');
+    }
+  }
 }

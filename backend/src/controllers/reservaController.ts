@@ -327,3 +327,169 @@ export const getReservasDonoQuadras = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Erro ao buscar reservas." });
   }
 };
+
+export const cancelarReservaDono = async (reservaId: number) => {
+    try {
+        const reserva = await prisma.reserva.findUniqueOrThrow({
+            where: { id: reservaId },
+        });
+
+        if (reserva.status === "CANCELADA") {
+            return { success: false, message: "Reserva já está cancelada." };
+        }
+
+        await prisma.reserva.update({
+            where: { id: reservaId },
+            data: { status: "CANCELADA" },
+        });
+
+        return { success: true, message: "Reserva cancelada com sucesso." };
+    } catch (error) {
+        console.error("Erro ao cancelar reserva:", error);
+        return { success: false, message: "Erro ao cancelar a reserva." };
+    }
+};
+
+export const confirmarReserva = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+        const reserva = await prisma.reserva.findUnique({
+            where: {
+                id: Number(id),
+            },
+            include: {
+                quadra: {
+                    include: {
+                        estabelecimento: true,
+                    },
+                },
+            },
+        });
+
+        if (!reserva) {
+            return res.status(404).json({
+                message: "Reserva não encontrada.",
+            });
+        }
+
+        if (
+            reserva.quadra.estabelecimento.proprietario_id !== req.user.id
+        ) {
+            return res.status(403).json({
+                message: "Você não pode confirmar esta reserva.",
+            });
+        }
+
+        if (reserva.status === "CONFIRMADA") {
+            return res.status(400).json({
+                message: "Essa reserva já está confirmada.",
+            });
+        }
+
+        await prisma.reserva.update({
+            where: {
+                id: Number(id),
+            },
+            data: {
+                status: "CONFIRMADA",
+            },
+        });
+
+        const chat = await prisma.chatReserva.create({
+            data:{
+                reserva_id:Number(id)
+            }
+        });
+
+        await prisma.chatParticipante.createMany({
+            data:[
+                {
+                    chat_id:chat.id,
+                    usuario_id:reserva.usuario_id
+                },
+                {
+                    chat_id:chat.id,
+                    usuario_id:
+                      reserva.quadra.estabelecimento.proprietario_id
+                }
+            ]
+        });
+
+        return res.status(200).json({
+            message: "Reserva confirmada.",
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(400).json({
+            message: "Erro ao confirmar reserva.",
+        });
+    }
+};
+
+export const recusarReserva = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+        const reserva = await prisma.reserva.findUnique({
+            where: {
+                id: Number(id),
+            },
+            include: {
+                quadra: {
+                    include: {
+                        estabelecimento: true,
+                    },
+                },
+            },
+        });
+
+
+        if (!reserva) {
+            return res.status(404).json({
+                message: "Reserva não encontrada.",
+            });
+        }
+
+
+        if (
+            reserva.quadra.estabelecimento.proprietario_id !== req.user.id
+        ) {
+            return res.status(403).json({
+                message: "Você não pode recusar esta reserva.",
+            });
+        }
+
+
+        if (reserva.status === "CONFIRMADA") {
+            return res.status(400).json({
+                message: "Não é possível recusar uma reserva confirmada.",
+            });
+        }
+
+
+        await prisma.reserva.update({
+            where: {
+                id: Number(id),
+            },
+            data: {
+                status: "RECUSADA",
+            },
+        });
+
+
+        return res.status(200).json({
+            message: "Reserva recusada.",
+        });
+
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(400).json({
+            message: "Erro ao recusar reserva.",
+        });
+    }
+};
