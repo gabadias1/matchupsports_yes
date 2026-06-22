@@ -434,6 +434,118 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
     }
   }
 
+  Future<void> _confirmarReserva(int id) async {
+    try {
+      await ReservaService.confirmarReserva(id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Reserva confirmada!",
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        await _carregarReservas();
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          SnackBar(
+            content: Text(
+              '$e',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _recusarReserva(int id) async {
+    try {
+      await ReservaService.recusarReserva(id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Reserva recusada.",
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+
+        await _carregarReservas();
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          SnackBar(
+            content: Text(
+              '$e',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _mostrarAcoesReserva(Reserva reserva) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            "Gerenciar reserva",
+          ),
+          content: const Text(
+            "Deseja confirmar ou recusar esta reserva?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+
+                await _recusarReserva(
+                  reserva.id,
+                );
+              },
+              child: const Text(
+                "Recusar",
+                style: TextStyle(
+                  color: Colors.red,
+                ),
+              ),
+            ),
+
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+
+                await _confirmarReserva(
+                  reserva.id,
+                );
+              },
+              child: const Text(
+                "Confirmar",
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   String _formatarData(String data) {
     final parts = data.split('-');
     if (parts.length == 3) {
@@ -497,129 +609,134 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
         itemCount: _reservas.length,
         itemBuilder: (context, index) {
           final reserva = _reservas[index];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 14),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.grayLight),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Cabeçalho com quadra e status
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              reserva.quadraNome ?? 'Quadra desconhecida',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.dark,
+          return GestureDetector(
+            onTap: reserva.status == 'PENDENTE'
+                ? () => _mostrarAcoesReserva(reserva)
+                : null,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.grayLight),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Cabeçalho com quadra e status
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                reserva.quadraNome ?? 'Quadra desconhecida',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.dark,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Usuário: ${reserva.estabelecimentoNome}',
-                              style: GoogleFonts.dmSans(
-                                  fontSize: 13, color: AppColors.gray),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: reserva.status == 'CONFIRMADA'
-                              ? AppColors.primaryLight
-                              : reserva.status == 'CANCELADA'
-                                  ? const Color(0xFFFAECE7)
-                                  : AppColors.secondaryLight,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          reserva.status == 'CONFIRMADA'
-                              ? 'Confirmada'
-                              : reserva.status == 'CANCELADA'
-                                  ? 'Cancelada'
-                                  : 'Pendente',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: reserva.status == 'CONFIRMADA'
-                                ? AppColors.primary
-                                : reserva.status == 'CANCELADA'
-                                    ? AppColors.error
-                                    : AppColors.secondary,
+                              const SizedBox(height: 2),
+                              Text(
+                                'Usuário: ${reserva.estabelecimentoNome}',
+                                style: GoogleFonts.dmSans(
+                                    fontSize: 13, color: AppColors.gray),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Divider(height: 1, color: AppColors.grayLight),
-                  const SizedBox(height: 12),
-                  // Detalhes da reserva
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.grayLight,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today,
-                                size: 14, color: AppColors.gray),
-                            const SizedBox(width: 4),
-                            Text(
-                              _formatarData(reserva.data),
-                              style: GoogleFonts.dmSans(
-                                fontSize: 12,
-                                color: AppColors.gray,
-                              ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: reserva.status == 'CONFIRMADA'
+                                ? AppColors.primaryLight
+                                : reserva.status == 'CANCELADA'
+                                    ? const Color(0xFFFAECE7)
+                                    : AppColors.secondaryLight,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            reserva.status == 'CONFIRMADA'
+                                ? 'Confirmada'
+                                : reserva.status == 'CANCELADA'
+                                    ? 'Cancelada'
+                                    : 'Pendente',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: reserva.status == 'CONFIRMADA'
+                                  ? AppColors.primary
+                                  : reserva.status == 'CANCELADA'
+                                      ? AppColors.error
+                                      : AppColors.secondary,
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.grayLight,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.access_time,
-                                size: 14, color: AppColors.gray),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${Reserva.formatarHora(reserva.horaInicio)} – ${Reserva.formatarHora(reserva.horaFim)}',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 12,
-                                color: AppColors.gray,
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Divider(height: 1, color: AppColors.grayLight),
+                    const SizedBox(height: 12),
+                    // Detalhes da reserva
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.grayLight,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today,
+                                  size: 14, color: AppColors.gray),
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatarData(reserva.data),
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12,
+                                  color: AppColors.gray,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.grayLight,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.access_time,
+                                  size: 14, color: AppColors.gray),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${Reserva.formatarHora(reserva.horaInicio)} – ${Reserva.formatarHora(reserva.horaFim)}',
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12,
+                                  color: AppColors.gray,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
+            )
           );
         },
       ),

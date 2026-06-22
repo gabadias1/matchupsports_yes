@@ -26,6 +26,8 @@ model Usuario {
   usuarioPartidas  UsuariosPartida[]
   partidasCriadas  Partida[] @relation("CriadorPartida")
   convites         ConvitePartida[] 
+  chats            ChatParticipante[]
+  mensagens        MensagemChat[]
 }
 
 model Estabelecimento {
@@ -84,11 +86,13 @@ model Reserva {
   created_at     DateTime @default(now())
   @@unique([quadra_id, data, hora_inicio])
   partida        Partida?
+  chatReserva    ChatReserva?
 }
 
 enum StatusReserva {
   PENDENTE
   CONFIRMADA
+  RECUSADA
   CANCELADA
 }
 
@@ -138,4 +142,33 @@ model ConvitePartida {
   usado      Boolean  @default(false)
   expiresAt  DateTime
   createdAt  DateTime @default(now())
+}
+
+model ChatReserva {
+  id          Int @id @default(autoincrement())
+  reserva_id Int @unique
+  reserva    Reserva @relation(fields: [reserva_id], references: [id])
+  participantes ChatParticipante[]
+  mensagens MensagemChat[]
+  createdAt DateTime @default(now())
+}
+
+model ChatParticipante {
+  id Int @id @default(autoincrement())
+  chat_id Int
+  chat ChatReserva @relation(fields: [chat_id], references: [id])
+  usuario_id Int
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+  entrouEm DateTime @default(now())
+  @@unique([chat_id, usuario_id])
+}
+
+model MensagemChat {
+  id Int @id @default(autoincrement())
+  chat_id Int
+  chat ChatReserva @relation(fields: [chat_id], references: [id])
+  usuario_id Int
+  usuario Usuario @relation(fields: [usuario_id], references: [id])
+  mensagem String
+  createdAt DateTime @default(now())
 }

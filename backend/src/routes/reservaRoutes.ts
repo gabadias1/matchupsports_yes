@@ -5,45 +5,13 @@ import {
   getMinhasReservas, 
   getAvailableSlots, 
   getReservasDonoQuadras,
-  cancelarReserva // Adicionado o seu controller da Sprint 3
+  cancelarReserva, // Adicionado o seu controller da Sprint 3
+  confirmarReserva,
+  recusarReserva
 } from "../controllers/reservaController";
+import { cargoMiddleware } from "../middleware/cargoMiddleware";
 
 const router = Router();
-
-/**
- * @swagger
- * components:
- * schemas:
- * Reserva:
- * type: object
- * properties:
- * id:
- * type: integer
- * example: 1
- * usuario_id:
- * type: integer
- * example: 3
- * quadra_id:
- * type: integer
- * example: 2
- * data:
- * type: string
- * format: date-time
- * example: "2025-06-24T00:00:00.000Z"
- * hora_inicio:
- * type: integer
- * example: 1800
- * hora_fim:
- * type: integer
- * example: 2000
- * status:
- * type: string
- * enum: [PENDENTE, CONFIRMADA, CANCELADA]
- * example: PENDENTE
- * created_at:
- * type: string
- * format: date-time
- */
 
 /**
  * POST /reservas
@@ -78,12 +46,72 @@ router.get("/minhas", autenticacaoMiddleware, getMinhasReservas);
  * security:
  * - bearerAuth: []
  * responses:
- * 200:
- * description: Lista de reservas do usuário
- * 401:
- * description: Não autenticado
+ *  200:
+ *    description: Lista de reservas do usuário
+ *  401:
+ *    description: Não autenticado
  */
 router.get("/me", autenticacaoMiddleware, getMinhasReservas);
+
+/**
+ * @swagger
+ * /reservas/{id}/recusar:
+ *   put:
+ *     summary: Recusa uma reserva
+ *     tags: [Reservas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: Reserva recusada com sucesso
+ *       403:
+ *         description: Sem permissão para recusar esta reserva
+ *       404:
+ *         description: Reserva não encontrada
+ */
+router.put(
+  "/:id/recusar",
+  autenticacaoMiddleware,
+  cargoMiddleware(1),
+  recusarReserva
+);
+
+/**
+ * @swagger
+ * /reservas/{id}/confirmar:
+ *   put:
+ *     summary: Confirma uma reserva
+ *     tags: [Reservas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: Reserva confirmada com sucesso
+ *       403:
+ *         description: Sem permissão para confirmar esta reserva
+ *       404:
+ *         description: Reserva não encontrada
+ */
+router.put(
+  "/:id/confirmar",
+  autenticacaoMiddleware,
+  cargoMiddleware(1),
+  confirmarReserva
+);
 
 /**
  * @swagger
@@ -101,12 +129,12 @@ router.get("/me", autenticacaoMiddleware, getMinhasReservas);
  * type: integer
  * example: 1
  * responses:
- * 200:
- * description: Reserva cancelada com sucesso
- * 403:
- * description: Sem permissão para cancelar esta reserva
- * 404:
- * description: Reserva não encontrada
+ *  200:
+ *    description: Reserva cancelada com sucesso
+ *  403:
+ *    description: Sem permissão para cancelar esta reserva
+ *  404:
+ *     description: Reserva não encontrada
  */
 router.delete("/:id", autenticacaoMiddleware, cancelarReserva);
 

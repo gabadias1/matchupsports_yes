@@ -62,7 +62,7 @@ export const entrarPartida = async (req: Request, res: Response) => {
     try {
         await prisma.$transaction(async (tx) => {
         const partida = await tx.partida.findUniqueOrThrow({
-            where: { id: Number(partidaId) },
+            where: { id: Number(partidaId), include: { reserva: true } },
         });
 
         if (partida.quantidade_atual >= partida.vagas) {
@@ -97,7 +97,21 @@ export const entrarPartida = async (req: Request, res: Response) => {
             },
             },
         });
+        const chat = await prisma.chatReserva.findUnique({
+            where:{
+                reserva_id: partida.reserva_id
+            }
         });
+
+        await prisma.chatParticipante.create({
+            data:{
+                chat_id:chat.id,
+                usuario_id:req.user.id
+            }
+        });
+        
+        });
+
 
         return res.status(200).json({
         message: "Entrou na partida com sucesso.",
