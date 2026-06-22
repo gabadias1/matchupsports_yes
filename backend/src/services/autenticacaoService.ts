@@ -1,18 +1,32 @@
 import { prisma } from "../config/prisma";
-import { Request, Response } from "express";
+import { Request } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 export const cadastrar = async (req: Request) => {
   const { nome, email, celular, senha, tipo } = req.body;
+
+  // 1. Verifica de verdade se o e-mail já existe no banco
+  const usuarioExistente = await prisma.usuario.findUnique({
+    where: { email },
+  });
+
+  if (usuarioExistente) {
+    throw new Error("E-mail já está em uso.");
+  }
+
   const hashedSenha = await bcrypt.hash(String(senha), 10);
+  
   try {
+    // 2. Como sabemos que o e-mail está livre, tentamos criar
     const usuario = await prisma.usuario.create({
       data: { nome, email, celular, senha: hashedSenha, tipo }
     });
     return usuario;
-  } catch {
-    throw new Error("E-mail já está em uso.");
+  } catch (error) {
+    // 3. Se o Prisma estourar erro agora, é por outro motivo! (ex: tamanho do texto, campo obrigatório faltando)
+    console.error("🚨 ERRO REAL DO PRISMA AO CRIAR CONTA:", error);
+    throw new Error("Erro interno ao criar conta. Olhe o terminal do backend para ver o motivo exato.");
   }
 };
 
@@ -42,5 +56,6 @@ export async function login(email: string, senha: string) {
       expiresIn: "7d",
     }
   );
-  return { usuario, token, };
+  
+  return { usuario, token };
 }
