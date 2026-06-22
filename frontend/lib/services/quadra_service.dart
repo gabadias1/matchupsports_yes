@@ -8,21 +8,43 @@ class QuadraService {
   static final _authService = AuthService();
 
   static Future<List<QuadraModel>> getQuadras() async {
-    final response = await _dio.get('/quadras');
-    final List<dynamic> data = response.data;
-    return data.map((json) => QuadraModel.fromJson(json)).toList();
+    try {
+      final response = await _dio.get('/quadras');
+      final List<dynamic> data = response.data;
+      return data.map((json) => QuadraModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      throw Exception('Erro ao carregar lista geral de quadras: ${e.message}');
+    }
   }
 
   static Future<List<QuadraModel>> getQuadrasByDono() async {
-    final token = await _authService.getToken();
-    final response = await _dio.get('/quadras/minhas', 
+    try {
+      final token = await _authService.getToken();
+      
+      if (token == null) {
+        throw Exception('Token não encontrado. Faça login novamente.');
+      }
+
+      // Resetamos explicitamente qualquer cabeçalho residual antes do GET
+      _dio.options.headers.remove('Authorization');
+
+      final response = await _dio.get(
+        '/quadras/minhas', 
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
           },
-        ),);
-    final List<dynamic> data = response.data;
-    return data.map((json) => QuadraModel.fromJson(json)).toList();
+        ),
+      );
+      
+      final List<dynamic> data = response.data;
+      return data.map((json) => QuadraModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Sessão expirada. Faça login novamente.');
+      }
+      throw Exception('Erro ao buscar suas quadras: ${e.message}');
+    }
   }
 
   static Future<QuadraModel> createQuadra({

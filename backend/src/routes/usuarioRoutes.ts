@@ -1,9 +1,30 @@
 import { Router } from "express";
-import { updateUsuario, deleteUsuario, getUsuario, getUsuarios } from "../controllers/usuarioController";
+import { updateUsuario, deleteUsuario, getUsuario, getUsuarios, getMe } from "../controllers/usuarioController";
+import { autenticacaoMiddleware } from "../middleware/autenticacaoMiddleware";
 
 const router = Router();
 
 // post /usuarios foi para autenticacaoRoutes.ts
+
+/**
+ * @swagger
+ * /usuarios/me:
+ *   get:
+ *     summary: Retorna dados do usuário logado
+ *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dados do usuário logado retornados com sucesso
+ *       401:
+ *         description: Token não fornecido ou inválido
+ *       404:
+ *         description: Usuário não encontrado
+ *       500:
+ *         description: Erro interno
+ */
+router.get("/me", autenticacaoMiddleware, getMe);
 
 /**
  * @swagger
@@ -18,7 +39,7 @@ const router = Router();
  *         description: ID do usuário
  *         schema:
  *           type: integer
- *           example: 1
+ *         example: 1
  *     responses:
  *       200:
  *         description: Usuário encontrado
@@ -49,6 +70,8 @@ router.get("/", getUsuarios);
  *   put:
  *     summary: Atualiza um usuário pelo ID
  *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -56,7 +79,7 @@ router.get("/", getUsuarios);
  *         description: ID do usuário
  *         schema:
  *           type: integer
- *           example: 1
+ *         example: 1
  *     requestBody:
  *       required: true
  *       content:
@@ -74,11 +97,11 @@ router.get("/", getUsuarios);
  *                 type: string
  *                 example: 11999999999
  *               senha:
- *                  type: string
- *                  example: senha123
+ *                 type: string
+ *                 example: senha123
  *               tipo:
- *                  type: integer
- *                  example: 0
+ *                 type: integer
+ *                 example: 0
  *     responses:
  *       200:
  *         description: Usuário atualizado com sucesso
@@ -89,7 +112,7 @@ router.get("/", getUsuarios);
  *       500:
  *         description: Erro interno
  */
-router.put("/:id", updateUsuario);
+router.put("/:id", autenticacaoMiddleware, updateUsuario);
 
 /**
  * @swagger
@@ -97,6 +120,8 @@ router.put("/:id", updateUsuario);
  *   delete:
  *     summary: Deleta um usuário pelo ID
  *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -104,7 +129,7 @@ router.put("/:id", updateUsuario);
  *         description: ID do usuário
  *         schema:
  *           type: integer
- *           example: 1
+ *         example: 1
  *     responses:
  *       204:
  *         description: Usuário deletado com sucesso
@@ -113,6 +138,6 @@ router.put("/:id", updateUsuario);
  *       500:
  *         description: Erro interno
  */
-router.delete("/:id", deleteUsuario);
+router.delete("/:id", autenticacaoMiddleware, deleteUsuario);
 
 export default router;
