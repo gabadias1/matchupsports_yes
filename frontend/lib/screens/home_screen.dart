@@ -1290,7 +1290,7 @@ class _HomeTabState extends State<_HomeTab> {
 
 class _MatchTab extends StatefulWidget {
 
-  const _MatchTab();
+  const _MatchTab({super.key});
 
 
 

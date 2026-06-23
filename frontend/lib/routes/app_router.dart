@@ -15,6 +15,7 @@ import 'package:match_up_sports/screens/quadras_screen.dart';
 import 'package:match_up_sports/screens/criar_quadra_screen.dart';
 import 'package:match_up_sports/screens/criar_estabelecimento_screen.dart';
 import 'package:match_up_sports/screens/perfil_screen.dart';
+import 'dart:convert';
 
 class AppRoutes {
   static const splash = '/';
@@ -44,6 +45,24 @@ final appRouter = GoRouter(
 
     final isAuth = token != null && token.isNotEmpty;
 
+    bool isDono = false;
+
+    if (isAuth) {
+      try {
+        final parts = token.split('.');
+        if (parts.length == 3) {
+          final payloadString = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+          final payloadMap = jsonDecode(payloadString);
+          
+          // Verifique qual é a regra do seu backend. 
+          // Se dono = 1, ou se é uma string "dono". Ajuste a condicional abaixo:
+          isDono = payloadMap['tipo'] == 1; // <-- Ajuste para a sua regra de negócio
+        }
+      } catch (e) {
+        debugPrint('Erro ao ler token no router: $e');
+      }
+    }
+
     // 3. Define quais rotas são PÚBLICAS (não precisam de token)
     final isSplash = state.matchedLocation == AppRoutes.splash;
     final isLogin = state.matchedLocation == AppRoutes.login;
@@ -58,7 +77,7 @@ final appRouter = GoRouter(
 
     // 5. Regra de Atalho: Com token e tentando acessar login ou register
     if (isAuth && (isLogin || isRegister)) {
-      return AppRoutes.home; // Impede que o usuário logado veja a tela de login
+      return isDono ? AppRoutes.homeScreenOwner : AppRoutes.home; // Impede que o usuário logado veja a tela de login
     }
 
     // Se estiver tudo certo, permite a passagem

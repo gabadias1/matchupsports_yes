@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -52,9 +54,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _phoneController.text.trim(),
         _selectedProfile,
       );
+
       await _authService.login(_emailController.text, _passwordController.text);
+    
       setState(() => _isLoading = false);
+      
+      if (_selectedProfile == 'dono') {
+      // Substitua 'AppRoutes.homeDono' pela variável exata que você 
+      // usa no seu app_router.dart para a tela do dono de quadra.
+      context.go(AppRoutes.homeScreenOwner); 
+    } else {
       context.go(AppRoutes.home);
+    }
     } on String catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
