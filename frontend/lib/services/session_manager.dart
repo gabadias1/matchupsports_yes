@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:match_up_sports/models/auth_context.dart';
 import 'package:uuid/uuid.dart';
@@ -33,7 +32,7 @@ class SessionManager {
         
         _activeSessionId = prefs.getString('active_session_id');
       } catch (e) {
-        print('Erro ao carregar sessões: $e');
+        throw Exception(e);
       }
     }
   }

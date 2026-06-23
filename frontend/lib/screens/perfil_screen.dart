@@ -482,7 +482,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
             height: 80,
 
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
 
               shape: BoxShape.circle,
 

@@ -99,7 +99,7 @@ class _SessionSwitcherState extends State<SessionSwitcher> {
                       ),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),

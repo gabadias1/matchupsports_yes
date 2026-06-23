@@ -71,8 +71,9 @@ class _HomeOwnerScreenState extends State<HomeOwnerScreen> {
             _QuadrasTab(
               courts: _courts,
               isLoading: _isLoading,
+              onRefresh: _loadQuadras,
             ),
-            _ReservasOwnerTab(),
+            const _ReservasOwnerTab(),
             _PerfilOwnerTab(),
           ],
         ),
@@ -265,132 +266,164 @@ class _DashboardTab extends StatelessWidget {
 
 // ── QUADRAS ──────────────────────────────────────────────────────────────────
 
-class _QuadrasTab extends StatelessWidget {
+class _QuadrasTab extends StatefulWidget {
   final List<Map<String, dynamic>> courts;
   final bool isLoading;
+  final Future<void> Function() onRefresh;
 
   const _QuadrasTab({
     required this.courts,
     required this.isLoading,
+    required this.onRefresh,
   });
 
   @override
+  State<_QuadrasTab> createState() => _QuadrasTabState();
+}
+
+class _QuadrasTabState extends State<_QuadrasTab> {
+  @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    if (widget.isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
 
-    if (courts.isEmpty) {
-      return Center(
-        child: Text(
-          'Nenhuma quadra cadastrada.',
-          style: GoogleFonts.dmSans(),
+    if (widget.courts.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: widget.onRefresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: Center(
+                child: Text(
+                  'Nenhuma quadra cadastrada.',
+                  style: GoogleFonts.dmSans(),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: courts.length,
-      itemBuilder: (context, index) {
-        final court = courts[index];
+    return RefreshIndicator(
+      onRefresh: widget.onRefresh,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        itemCount: widget.courts.length,
+        itemBuilder: (context, index) {
+          final court = widget.courts[index];
 
-        return GestureDetector(
-          onTap: () {
-            context.push(
-              AppRoutes.criarDisponibilidade.replaceFirst(
-                ':quadraId',
-                court['id'].toString(),
+          return GestureDetector(
+            onTap: () {
+              context.push(
+                AppRoutes.criarDisponibilidade.replaceFirst(
+                  ':quadraId',
+                  court['id'].toString(),
+                ),
+              );
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.grayLight,
+                ),
               ),
-            );
-          },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.grayLight),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        court['name'],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          court['name'],
+                          style: GoogleFonts.dmSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                        color: AppColors.gray,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  Text(
+                    court['sport'],
+                    style: GoogleFonts.dmSans(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    court['description'] ?? '',
+                    style: GoogleFonts.dmSans(
+                      color: AppColors.gray,
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        court['price'],
                         style: GoogleFonts.dmSans(
-                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
 
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: AppColors.gray,
-                    ),
-                  ],
-                ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              context.push(
+                                AppRoutes.criarQuadra,
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.edit_outlined,
+                            ),
+                          ),
 
-                const SizedBox(height: 6),
-
-                Text(
-                  court['sport'],
-                  style: GoogleFonts.dmSans(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  court['description'] ?? '',
-                  style: GoogleFonts.dmSans(
-                    color: AppColors.gray,
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      court['price'],
-                      style: GoogleFonts.dmSans(
-                        fontWeight: FontWeight.bold,
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(
+                              Icons.delete_outline,
+                            ),
+                            color: AppColors.error,
+                          ),
+                        ],
                       ),
-                    ),
-
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            context.push(AppRoutes.criarQuadra);
-                          },
-                          icon: const Icon(Icons.edit_outlined),
-                        ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.delete_outline),
-                          color: AppColors.error,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

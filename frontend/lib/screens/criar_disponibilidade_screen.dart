@@ -465,7 +465,7 @@ class _CriarDisponibilidadeQuadraScreenState
     required Function(T?) onChanged,
   }) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,

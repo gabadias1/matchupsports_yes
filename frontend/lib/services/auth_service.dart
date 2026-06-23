@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:match_up_sports/services/session_manager.dart';
 
 class AuthService {

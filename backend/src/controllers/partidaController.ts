@@ -61,61 +61,60 @@ export const entrarPartida = async (req: Request, res: Response) => {
 
     try {
         await prisma.$transaction(async (tx) => {
-        const partida = await tx.partida.findUniqueOrThrow({
-            where: { id: Number(partidaId), include: { reserva: true } },
-        });
+            const partida = await tx.partida.findUniqueOrThrow({
+                where: { id: Number(partidaId) }, include: { reserva: true },
+            });
 
-        if (partida.quantidade_atual >= partida.vagas) {
-            throw new Error("PARTIDA_CHEIA");
-        }
+            if (partida.quantidade_atual >= partida.vagas) {
+                throw new Error("PARTIDA_CHEIA");
+            }
 
-        const usuarioJaEntrou = await tx.usuariosPartida.findUnique({
-            where: {
-            usuario_id_partida_id: {
+            const usuarioJaEntrou = await tx.usuariosPartida.findUnique({
+                where: {
+                usuario_id_partida_id: {
+                    usuario_id: Number(userId),
+                    partida_id: Number(partidaId),
+                },
+                },
+            });
+
+            if (usuarioJaEntrou) {
+                throw new Error("USUARIO_JA_ENTROU");
+            }
+
+            await tx.usuariosPartida.create({
+                data: {
                 usuario_id: Number(userId),
                 partida_id: Number(partidaId),
-            },
-            },
-        });
+                },
+            });
 
-        if (usuarioJaEntrou) {
-            throw new Error("USUARIO_JA_ENTROU");
-        }
+            await tx.partida.update({
+                where: { id: Number(partidaId) },
+                data: {
+                quantidade_atual: {
+                    increment: 1,
+                },
+                },
+            });
+            const chat = await prisma.chatReserva.findUnique({
+                where:{
+                    reserva_id: partida.reserva_id
+                }
+            });
 
-        await tx.usuariosPartida.create({
-            data: {
-            usuario_id: Number(userId),
-            partida_id: Number(partidaId),
-            },
-        });
-
-        await tx.partida.update({
-            where: { id: Number(partidaId) },
-            data: {
-            quantidade_atual: {
-                increment: 1,
-            },
-            },
-        });
-        const chat = await prisma.chatReserva.findUnique({
-            where:{
-                reserva_id: partida.reserva_id
-            }
-        });
-
-        await prisma.chatParticipante.create({
-            data:{
-                chat_id:chat.id,
-                usuario_id:req.user.id
-            }
-        });
-        
+            await prisma.chatParticipante.create({
+                data:{
+                    chat_id:chat.id,
+                    usuario_id:req.user.id
+                }
+            });
+            return res.status(200).json({
+            message: "Entrou na partida com sucesso.",
+            });
         });
 
 
-        return res.status(200).json({
-        message: "Entrou na partida com sucesso.",
-        });
     } catch (error: any) {
         if (error.message === "PARTIDA_CHEIA") {
         return res.status(400).json({
@@ -139,18 +138,38 @@ export const sairPartida = async (req: Request, res: Response) => {
     const { partidaId } = req.params;
     const userId = req.user?.id;
     try {
-        await prisma.usuariosPartida.delete({
-            where: { 
-                usuario_id_partida_id: { // <-- Corrigido para snake_case
-                    usuario_id: Number(userId), 
-                    partida_id: Number(partidaId) 
-                } 
-            },
-        });
-        await prisma.partida.update({
-            where: { id: Number(partidaId) },
-            data: { quantidade_atual: { decrement: 1 } },
-        });
+        await prisma.$transaction(async (tx) => {
+            await tx.usuariosPartida.delete({
+                where: { 
+                    usuario_id_partida_id: { // <-- Corrigido para snake_case
+                        usuario_id: Number(userId), 
+                        partida_id: Number(partidaId) 
+                    } 
+                },
+            });
+            await tx.partida.update({
+                where: { id: Number(partidaId) },
+                data: { quantidade_atual: { decrement: 1 } },
+            });
+            const partida = await tx.partida.findUnique({
+                where: {
+                    id: Number(partidaId)
+                }
+            });
+            const chat = await tx.chatReserva.findUnique({
+                where:{
+                    reserva_id: partida.reserva_id
+                }
+            });
+            await tx.chatParticipante.delete({
+                where:{
+                    chat_id_usuario_id: {
+                        chat_id:chat.id,
+                        usuario_id:req.user.id
+                    }
+                }
+            });
+        })
         return res.status(200).json({ message: "Saiu da partida com sucesso." });
     } catch (error) {
         // Coloquei um console.log aqui pra caso dê erro no futuro, você ver o motivo no terminal do Node

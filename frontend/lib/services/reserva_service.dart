@@ -85,10 +85,15 @@ class ReservaService {
 
   static Future<List<Map<String, int>>> getAvailableSlots({required int quadraId, required String date}) async {
     try {
+      final token = await _authService.getToken();
       final response = await _dio.get('/available', queryParameters: {
         'quadra_id': quadraId,
         'date': date,
-      });
+      }, options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),);
 
       final List data = response.data as List;
       return data.map((item) => {

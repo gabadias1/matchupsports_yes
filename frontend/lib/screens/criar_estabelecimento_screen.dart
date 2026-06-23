@@ -53,7 +53,7 @@ class _CriarEstabelecimentoScreenState extends State<CriarEstabelecimentoScreen>
 
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
-          context.go(AppRoutes.home);
+          context.pop();
         }
       }
     } catch (e) {

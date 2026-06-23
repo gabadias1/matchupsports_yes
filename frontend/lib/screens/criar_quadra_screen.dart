@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:match_up_sports/models/estabelecimento.dart';
+import 'package:match_up_sports/services/estabelecimento_service.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 
@@ -15,9 +17,12 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
   final _formKey = GlobalKey<FormState>();
   final _identificacaoController = TextEditingController();
   final _descricaoController = TextEditingController();
-  final _estabelecimentoIdController = TextEditingController();
   final _valorHoraController = TextEditingController();
-  
+  final estabelecimentoService = EstabelecimentoService();
+  List<EstabelecimentoModel> estabelecimentos = [];
+  bool _loadingEstabelecimentos = true;
+  int? _estabelecimentoSelecionado;
+
   String? _selectedEsporte;
   bool _isLoading = false;
 
@@ -31,9 +36,39 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
   void dispose() {
     _identificacaoController.dispose();
     _descricaoController.dispose();
-    _estabelecimentoIdController.dispose();
     _valorHoraController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEstabelecimentos();
+  }
+
+  Future<void> _loadEstabelecimentos() async {
+    try {
+      final lista = await estabelecimentoService.meusEstabelecimentos();
+      if (!mounted) return;
+      setState(() {
+        estabelecimentos = lista;
+        _loadingEstabelecimentos = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingEstabelecimentos = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.error,
+          content: Text(
+            e.toString().replaceAll('Exception: ', ''),
+            style: GoogleFonts.dmSans(color: Colors.white),
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _submitForm() async {
@@ -61,7 +96,7 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
       final quadra = await QuadraService.createQuadra(
         identificacao: _identificacaoController.text,
         descricao: _descricaoController.text,
-        estabelecimentoId: int.parse(_estabelecimentoIdController.text),
+        estabelecimentoId: _estabelecimentoSelecionado!,
         esporte: _selectedEsporte!,
         valorHora: double.parse(_valorHoraController.text),
       );
@@ -307,44 +342,57 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Campo: ID do Estabelecimento
-                Text(
-                  'ID do Estabelecimento',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.dark,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _estabelecimentoIdController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: 'Ex: 1, 2, 3...',
-                    hintStyle: GoogleFonts.dmSans(color: AppColors.grayLight),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.grayLight),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                  style: GoogleFonts.dmSans(color: AppColors.dark),
-                  validator: (value) {
-                    if (value?.isEmpty ?? true) {
-                      return 'Informe o ID do estabelecimento';
-                    }
-                    if (int.tryParse(value!) == null) {
-                      return 'O ID deve ser um número válido';
-                    }
-                    return null;
-                  },
-                ),
+                _loadingEstabelecimentos
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : DropdownButtonFormField<int>(
+                        value: _estabelecimentoSelecionado,
+
+                        decoration: InputDecoration(
+                          hintText: 'Selecione um estabelecimento',
+                          hintStyle: GoogleFonts.dmSans(
+                            color: AppColors.grayLight,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: AppColors.grayLight,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+
+                        items: estabelecimentos.map((estabelecimento) {
+                          return DropdownMenuItem<int>(
+                            value: estabelecimento.id,
+                            child: Text(
+                              estabelecimento.nomeLocal,
+                              style: GoogleFonts.dmSans(
+                                color: AppColors.dark,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+
+                        onChanged: (value) {
+                          setState(() {
+                            _estabelecimentoSelecionado = value;
+                          });
+                        },
+
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Selecione um estabelecimento';
+                          }
+                          return null;
+                        },
+                      ),
                 const SizedBox(height: 20),
 
                 // Campo: Valor por Hora

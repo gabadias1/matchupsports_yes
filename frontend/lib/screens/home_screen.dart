@@ -3298,7 +3298,7 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
 
             height: 80,
 
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
 
               shape: BoxShape.circle,
 

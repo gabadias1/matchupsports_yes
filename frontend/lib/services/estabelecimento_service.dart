@@ -55,4 +55,21 @@ class EstabelecimentoService {
       throw Exception('Erro ao cadastrar estabelecimento: ${e.message}');
     }
   }
+
+  Future<List<EstabelecimentoModel>> meusEstabelecimentos() async {
+    try {
+      final token = await _authService.getToken();
+      final proprietarioId = await _authService.getUserId();
+      final response = await _dio.get('/estabelecimentos/proprietario/$proprietarioId', 
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ));
+      final List<dynamic> data = response.data;
+      return data.map((json) => EstabelecimentoModel.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception("e");
+    }
+  }
 }
