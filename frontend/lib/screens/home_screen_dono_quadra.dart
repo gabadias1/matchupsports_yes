@@ -79,12 +79,6 @@ class _HomeOwnerScreenState extends State<HomeOwnerScreen> {
         ),
       ),
       bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(AppRoutes.criarQuadra),
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add),
-        label: const Text('Nova Quadra'),
-      ),
     );
   }
 
@@ -676,22 +670,47 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Usuário: ${reserva.estabelecimentoNome}',
+                                'Usuário: ${reserva.nomeJogador}',
                                 style: GoogleFonts.dmSans(
-                                    fontSize: 13, color: AppColors.gray),
+                                  fontSize: 13,
+                                  color: AppColors.gray,
+                                ),
                               ),
                             ],
                           ),
                         ),
+
+                        // Botão do chat somente se confirmada
+                        if (reserva.status == 'CONFIRMADA')
+                          IconButton(
+                            tooltip: 'Abrir chat',
+                            icon: const Icon(
+                              Icons.chat_outlined,
+                              color: AppColors.primary,
+                            ),
+                            onPressed: () {
+                              context.push(
+                                AppRoutes.chat.replaceFirst(
+                                  ':reservaId',
+                                  reserva.id.toString(),
+                                ),
+                              );
+                            },
+                          ),
+
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: reserva.status == 'CONFIRMADA'
                                 ? AppColors.primaryLight
                                 : reserva.status == 'CANCELADA'
                                     ? const Color(0xFFFAECE7)
-                                    : AppColors.secondaryLight,
+                                    : reserva.status == 'PENDENTE'
+                                        ? AppColors.secondaryLight
+                                        : AppColors.grayLight,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -699,7 +718,9 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
                                 ? 'Confirmada'
                                 : reserva.status == 'CANCELADA'
                                     ? 'Cancelada'
-                                    : 'Pendente',
+                                    : reserva.status == 'PENDENTE'
+                                        ? 'Pendente'
+                                        : 'RECUSADA',
                             style: GoogleFonts.dmSans(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -707,7 +728,9 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
                                   ? AppColors.primary
                                   : reserva.status == 'CANCELADA'
                                       ? AppColors.error
-                                      : AppColors.secondary,
+                                      : reserva.status == 'PENDENTE'
+                                          ? AppColors.secondary
+                                          : AppColors.dark,
                             ),
                           ),
                         ),

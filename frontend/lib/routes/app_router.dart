@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:match_up_sports/screens/chat.dart';
 
 // Importe o SessionManager para ler o token
 import 'package:match_up_sports/services/session_manager.dart';
@@ -29,6 +30,7 @@ class AppRoutes {
   static const criarEstabelecimento = '/criar-estabelecimento';
   static const criarDisponibilidade = '/criar-disponibilidade/:quadraId';
   static const criarPartida = '/criar-partida/:reservaId';
+  static const chat = '/chat-reserva/:reservaId';
 }
 
 final appRouter = GoRouter(
@@ -140,6 +142,17 @@ final appRouter = GoRouter(
           state.pathParameters['reservaId']!,
         );
         return CriarPartidaScreen(
+          reservaId: reservaId,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.chat,
+      builder: (context, state) {
+        final reservaId = int.parse(
+          state.pathParameters['reservaId']!,
+        );
+        return ChatReservaScreen(
           reservaId: reservaId,
         );
       },

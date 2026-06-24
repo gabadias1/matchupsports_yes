@@ -347,7 +347,7 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
                         child: CircularProgressIndicator(),
                       )
                     : DropdownButtonFormField<int>(
-                        value: _estabelecimentoSelecionado,
+                        initialValue: _estabelecimentoSelecionado,
 
                         decoration: InputDecoration(
                           hintText: 'Selecione um estabelecimento',

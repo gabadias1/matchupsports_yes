@@ -179,18 +179,18 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'Esqueci minha senha',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 13,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                      //const SizedBox(height: 12),
+                      //Align(
+                      //  alignment: Alignment.centerRight,
+                      //  child: Text(
+                      //    'Esqueci minha senha',
+                      //    style: GoogleFonts.dmSans(
+                      //      fontSize: 13,
+                      //      color: AppColors.primary,
+                      //      fontWeight: FontWeight.w600,
+                      //    ),
+                      //  ),
+                      //),
                       const SizedBox(height: 28),
                       ElevatedButton(
                         onPressed: _isLoading ? null : _handleLogin,
@@ -221,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 12),
                             child: Text(
-                              'ou entre como',
+                              'você pode entrar como:',
                               style: GoogleFonts.dmSans(
                                   fontSize: 12, color: AppColors.gray),
                             ),
@@ -239,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: _ProfileButton(
                               emoji: '🏃',
                               label: 'Jogador',
-                              onTap: () => context.go(AppRoutes.home),
+                              onTap: () => context.go(AppRoutes.login),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -247,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: _ProfileButton(
                               emoji: '🏟️',
                               label: 'Dono de Quadra',
-                              onTap: () => context.go(AppRoutes.home),
+                              onTap: () => context.go(AppRoutes.login),
                             ),
                           ),
                         ],

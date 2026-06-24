@@ -7,6 +7,7 @@ class Reserva {
   final int horaFim;
   final String status;
   final String? quadraNome;
+  final String? nomeJogador;
   final String? estabelecimentoNome;
   final double? valorHora;
   final String? esporte;
@@ -21,6 +22,7 @@ class Reserva {
     required this.status,
     this.quadraNome,
     this.estabelecimentoNome,
+    this.nomeJogador,
     this.valorHora,
     this.esporte,
   });
@@ -36,6 +38,7 @@ class Reserva {
       status: json['status'],
       quadraNome: json['quadra']?['identificacao'] ?? json['quadraNome'],
       estabelecimentoNome: json['quadra']?['estabelecimento']?['nome_local'] ?? json['estabelecimentoNome'],
+      nomeJogador: json['usuario']?['nome'] ?? json['nomeUsuario'],
       valorHora: (json['quadra']?['valor_hora'] ?? json['valorHora'])?.toDouble(),
       esporte: json['quadra']?['esporte'] ?? json['esporte'],
     );
@@ -47,5 +50,19 @@ class Reserva {
     int h = hora ~/ 100;
     int m = hora % 100;
     return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+  }
+
+  // Função auxiliar para formatar a data
+  String formatarData() {
+    try {
+      final parts = data.split('-');
+      if (parts.length >= 3) {
+        final day = parts[2].substring(0, 2); // ignora o T00:00:00 caso venha
+        return '$day/${parts[1]}/${parts[0]}';
+      }
+      return data;
+    } catch (_) {
+      return data;
+    }
   }
 }

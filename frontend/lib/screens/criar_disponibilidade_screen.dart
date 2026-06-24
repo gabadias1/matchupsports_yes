@@ -74,7 +74,7 @@ class _CriarDisponibilidadeQuadraScreenState
     }
   }
 
-  void adicionarDisponibilidade() {
+  void adicionarDisponibilidade() async {
     if (diaSelecionado == null ||
         horarioInicio == null ||
         horarioFim == null) {
