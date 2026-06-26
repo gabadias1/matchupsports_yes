@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createEstabelecimento, deleteEstabelecimento, getEstabelecimento, getEstabelecimentoByProprietario, getEstabelecimentos, updateEstabelecimento } from "../controllers/estabelecimentoController";
+import { createEstabelecimento, deleteEstabelecimento, getEstabelecimento, getEstabelecimentoByProprietario, getEstabelecimentos, getEstabelecimentosDoUsuarioLogado, updateEstabelecimento } from "../controllers/estabelecimentoController";
 import { autenticacaoMiddleware } from "../middleware/autenticacaoMiddleware";
 import { cargoMiddleware } from "../middleware/cargoMiddleware";
 
@@ -53,6 +53,15 @@ router.post("/",
  *       200:
  *         description: Lista de estabelecimentos retornada com sucesso
  */
+router.get("/me", autenticacaoMiddleware, cargoMiddleware(1), getEstabelecimentosDoUsuarioLogado);
+
+router.get(
+  "/proprietario/:proprietarioId", 
+  autenticacaoMiddleware, 
+  cargoMiddleware(1), 
+  getEstabelecimentoByProprietario
+);
+
 router.get("/", getEstabelecimentos);
 
 /**
@@ -76,33 +85,6 @@ router.get("/", getEstabelecimentos);
  *         description: Estabelecimento não encontrado
  */
 router.get("/:id", getEstabelecimento);
-
-
-/**
- * @swagger
- * /estabelecimentos/proprietario/{proprietarioId}:
- *   get:
- *     summary: Lista estabelecimentos de um proprietário
- *     tags: [Estabelecimentos]
- *     parameters:
- *       - in: path
- *         name: proprietarioId
- *         required: true
- *         schema:
- *           type: integer
- *         example: 1
- *     responses:
- *       200:
- *         description: Lista de estabelecimentos do proprietário
- *       404:
- *         description: Usuário não encontrado
- */
-router.get(
-  "/proprietario/:proprietarioId", 
-  autenticacaoMiddleware, 
-  cargoMiddleware(1), 
-  getEstabelecimentoByProprietario
-);
 
 /**
  * @swagger

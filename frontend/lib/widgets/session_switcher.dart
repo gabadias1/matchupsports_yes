@@ -43,7 +43,7 @@ class _SessionSwitcherState extends State<SessionSwitcher> {
         }
 
         return Container(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: 0.1),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -99,7 +99,7 @@ class _SessionSwitcherState extends State<SessionSwitcher> {
                       ),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),

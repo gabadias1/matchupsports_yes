@@ -57,13 +57,18 @@ export const createPartida = async (req: Request, res: Response) => {
 
 export const entrarPartida = async (req: Request, res: Response) => {
     const { partidaId } = req.params;
-    const userId = req.user?.id;
+    const userId = Number(req.user?.id);
+
+    if (!userId) {
+        return res.status(401).json({ message: "Usuário não autenticado." });
+    }
 
     try {
         await prisma.$transaction(async (tx) => {
-        const partida = await tx.partida.findUniqueOrThrow({
-            where: { id: Number(partidaId), include: { reserva: true } },
-        });
+const partida = await tx.partida.findUniqueOrThrow({
+    where: { id: Number(partidaId) },
+    include: { reserva: true },
+});
 
         if (partida.quantidade_atual >= partida.vagas) {
             throw new Error("PARTIDA_CHEIA");
@@ -72,7 +77,7 @@ export const entrarPartida = async (req: Request, res: Response) => {
         const usuarioJaEntrou = await tx.usuariosPartida.findUnique({
             where: {
             usuario_id_partida_id: {
-                usuario_id: Number(userId),
+                usuario_id: userId,
                 partida_id: Number(partidaId),
             },
             },
@@ -84,7 +89,7 @@ export const entrarPartida = async (req: Request, res: Response) => {
 
         await tx.usuariosPartida.create({
             data: {
-            usuario_id: Number(userId),
+            usuario_id: userId,
             partida_id: Number(partidaId),
             },
         });
@@ -97,18 +102,29 @@ export const entrarPartida = async (req: Request, res: Response) => {
             },
             },
         });
-        const chat = await prisma.chatReserva.findUnique({
+        const chat = await tx.chatReserva.findUnique({
             where:{
                 reserva_id: partida.reserva_id
             }
         });
 
-        await prisma.chatParticipante.create({
-            data:{
-                chat_id:chat.id,
-                usuario_id:req.user.id
+        if (chat) {
+            const participanteExistente = await tx.chatParticipante.findFirst({
+                where: {
+                    chat_id: chat.id,
+                    usuario_id: userId,
+                },
+            });
+
+            if (!participanteExistente) {
+                await tx.chatParticipante.create({
+                    data:{
+                        chat_id:chat.id,
+                        usuario_id:userId
+                    }
+                });
             }
-        });
+        }
         
         });
 

@@ -482,13 +482,13 @@ class _HomeTabState extends State<_HomeTab> {
 
                       decoration: BoxDecoration(
 
-                        color: AppColors.white.withOpacity(0.08),
+                        color: AppColors.white.withValues(alpha: 0.08),
 
                         borderRadius: BorderRadius.circular(10),
 
                         border: Border.all(
 
-                            color: AppColors.white.withOpacity(0.12)),
+                            color: AppColors.white.withValues(alpha: 0.12)),
 
                       ),
 
@@ -576,7 +576,7 @@ class _HomeTabState extends State<_HomeTab> {
 
                               fontSize: 12,
 
-                              color: AppColors.white.withOpacity(0.85),
+                              color: AppColors.white.withValues(alpha: 0.85),
 
                             ),
 
@@ -960,26 +960,37 @@ class _HomeTabState extends State<_HomeTab> {
 
       });
 
-
-
       try {
 
-        final dateStr = selectedDate.toIso8601String().split('T').first;
+        DateTime? matchingDate;
+        List<Map<String, int>>? matchingSlots;
 
-        final slots = await ReservaService.getAvailableSlots(
+        for (int offset = 0; offset <= 7; offset++) {
+          final candidateDate = selectedDate.add(Duration(days: offset));
+          final dateStr = candidateDate.toIso8601String().split('T').first;
 
-            quadraId: court['id'], date: dateStr);
+          final slots = await ReservaService.getAvailableSlots(
+            quadraId: court['id'],
+            date: dateStr,
+          );
 
-        final filtered = slots.where((s) => (s['start'] ?? 0) >= 600).toList();
+          if (slots.isNotEmpty) {
+            matchingDate = candidateDate;
+            matchingSlots = slots;
+            break;
+          }
+        }
 
         setStateDialog(() {
-
-          availableSlots = filtered;
-
-          selectedSlotIndex = filtered.isNotEmpty ? 0 : null;
-
+          if (matchingDate != null && matchingSlots != null) {
+            selectedDate = matchingDate;
+            availableSlots = matchingSlots;
+            selectedSlotIndex = 0;
+          } else {
+            availableSlots = [];
+            selectedSlotIndex = null;
+          }
           slotsLoaded = true;
-
         });
 
       } catch (_) {
@@ -1010,7 +1021,7 @@ class _HomeTabState extends State<_HomeTab> {
 
       builder: (ctx) {
 
-        return StatefulBuilder(builder: (context, setStateDialog) {
+        return StatefulBuilder(builder: (dialogContext, setStateDialog) {
 
           if (!slotsLoaded && !loadingSlots) {
 
@@ -1021,8 +1032,6 @@ class _HomeTabState extends State<_HomeTab> {
             });
 
           }
-
-
 
           return AlertDialog(
 
@@ -1056,7 +1065,7 @@ class _HomeTabState extends State<_HomeTab> {
 
                           final d = await showDatePicker(
 
-                            context: context,
+                            context: dialogContext,
 
                             initialDate: selectedDate,
 
@@ -1192,7 +1201,7 @@ class _HomeTabState extends State<_HomeTab> {
 
                   if (availableSlots == null || availableSlots!.isEmpty) {
 
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(
 
                         content: Text('Nenhum horário disponível.')));
 
@@ -1573,7 +1582,7 @@ class _MatchTabState extends State<_MatchTab> {
 
                         leading: CircleAvatar(
 
-                          backgroundColor: AppColors.primary.withOpacity(0.1),
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
 
                           child: const Icon(Icons.person,
 
@@ -3266,9 +3275,9 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
 
           colors: [
 
-            AppColors.primary.withOpacity(0.1),
+            AppColors.primary.withValues(alpha: 0.1),
 
-            AppColors.secondary.withOpacity(0.1),
+            AppColors.secondary.withValues(alpha: 0.1),
 
           ],
 
@@ -3278,7 +3287,7 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
 
         border: Border.all(
 
-          color: AppColors.primary.withOpacity(0.2),
+          color: AppColors.primary.withValues(alpha: 0.2),
 
           width: 1,
 
@@ -3298,7 +3307,7 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
 
             height: 80,
 
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
 
               shape: BoxShape.circle,
 
@@ -3524,7 +3533,7 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
 
         border: Border.all(
 
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
 
           width: 1.5,
 
@@ -3546,7 +3555,7 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
 
             decoration: BoxDecoration(
 
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
 
               borderRadius: BorderRadius.circular(12),
 
@@ -4076,7 +4085,7 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
 
                     border: Border.all(
 
-                      color: AppColors.secondary.withOpacity(0.2),
+                      color: AppColors.secondary.withValues(alpha: 0.2),
 
                       width: 1,
 
@@ -4296,7 +4305,7 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
 
                     border: Border.all(
 
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
 
                       width: 1,
 

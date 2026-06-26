@@ -465,7 +465,7 @@ class _CriarDisponibilidadeQuadraScreenState
     required Function(T?) onChanged,
   }) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
@@ -509,7 +509,7 @@ class _CriarDisponibilidadeQuadraScreenState
           border: Border.all(
             color: ativo
                 ? AppColors.grayLight
-                : AppColors.error.withOpacity(0.25),
+                : AppColors.error.withValues(alpha: 0.25),
           ),
         ),
 
@@ -521,8 +521,8 @@ class _CriarDisponibilidadeQuadraScreenState
 
               decoration: BoxDecoration(
                 color: ativo
-                    ? AppColors.primary.withOpacity(0.1)
-                    : AppColors.error.withOpacity(0.1),
+                    ? AppColors.primary.withValues(alpha: 0.1)
+                    : AppColors.error.withValues(alpha: 0.1),
 
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -570,7 +570,7 @@ class _CriarDisponibilidadeQuadraScreenState
 
                           decoration: BoxDecoration(
                             color: AppColors.error
-                                .withOpacity(0.12),
+                                .withValues(alpha: 0.12),
 
                             borderRadius:
                                 BorderRadius.circular(20),
@@ -755,7 +755,7 @@ class _CriarDisponibilidadeQuadraScreenState
                 Text(
                   'Defina os dias e horários disponíveis para reserva.',
                   style: GoogleFonts.dmSans(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     height: 1.5,
                   ),
                 ),
