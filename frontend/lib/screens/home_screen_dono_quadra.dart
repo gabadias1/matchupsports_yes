@@ -2,7 +2,6 @@ import 'package:go_router/go_router.dart';
 import 'package:match_up_sports/routes/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 import 'package:match_up_sports/widgets/app_widgets.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
@@ -72,8 +71,8 @@ class _HomeOwnerScreenState extends State<HomeOwnerScreen> {
               courts: _courts,
               isLoading: _isLoading,
             ),
-            _ReservasOwnerTab(),
-            _PerfilOwnerTab(),
+            const _ReservasOwnerTab(),
+            const SizedBox.shrink(),
           ],
         ),
       ),
@@ -97,7 +96,13 @@ class _HomeOwnerScreenState extends State<HomeOwnerScreen> {
       ),
       child: BottomNavigationBar(
         currentIndex: _currentTab,
-        onTap: (index) => setState(() => _currentTab = index),
+        onTap: (index) {
+          if (index == 3) {
+            context.push(AppRoutes.perfil);
+            return;
+          }
+          setState(() => _currentTab = index);
+        },
         type: BottomNavigationBarType.fixed,
         backgroundColor: AppColors.white,
         selectedItemColor: AppColors.primary,
@@ -174,9 +179,7 @@ class _DashboardTab extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 24),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -199,9 +202,7 @@ class _DashboardTab extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 14),
-
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -224,9 +225,7 @@ class _DashboardTab extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 28),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SectionHeader(
@@ -235,9 +234,7 @@ class _DashboardTab extends StatelessWidget {
               onAction: () {},
             ),
           ),
-
           const SizedBox(height: 12),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
@@ -245,8 +242,7 @@ class _DashboardTab extends StatelessWidget {
                 _QuickActionButton(
                   icon: Icons.add_business,
                   title: 'Cadastrar estabelecimento',
-                  onTap: () =>
-                      context.push(AppRoutes.criarEstabelecimento),
+                  onTap: () => context.push(AppRoutes.criarEstabelecimento),
                 ),
                 const SizedBox(height: 12),
                 _QuickActionButton(
@@ -329,7 +325,6 @@ class _QuadrasTab extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     const Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
@@ -337,9 +332,7 @@ class _QuadrasTab extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 6),
-
                 Text(
                   court['sport'],
                   style: GoogleFonts.dmSans(
@@ -347,18 +340,14 @@ class _QuadrasTab extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   court['description'] ?? '',
                   style: GoogleFonts.dmSans(
                     color: AppColors.gray,
                   ),
                 ),
-
                 const SizedBox(height: 14),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -368,7 +357,6 @@ class _QuadrasTab extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     Row(
                       children: [
                         IconButton(
@@ -439,8 +427,7 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
       await ReservaService.confirmarReserva(id);
 
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
               "Reserva confirmada!",
@@ -451,11 +438,9 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
 
         await _carregarReservas();
       }
-
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               '$e',
@@ -472,8 +457,7 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
       await ReservaService.recusarReserva(id);
 
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
               "Reserva recusada.",
@@ -484,11 +468,9 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
 
         await _carregarReservas();
       }
-
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               '$e',
@@ -527,7 +509,6 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
                 ),
               ),
             ),
-
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context);
@@ -610,214 +591,134 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
         itemBuilder: (context, index) {
           final reserva = _reservas[index];
           return GestureDetector(
-            onTap: reserva.status == 'PENDENTE'
-                ? () => _mostrarAcoesReserva(reserva)
-                : null,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.grayLight),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Cabeçalho com quadra e status
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                reserva.quadraNome ?? 'Quadra desconhecida',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.dark,
+              onTap: reserva.status == 'PENDENTE'
+                  ? () => _mostrarAcoesReserva(reserva)
+                  : null,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.grayLight),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Cabeçalho com quadra e status
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  reserva.quadraNome ?? 'Quadra desconhecida',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.dark,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Usuário: ${reserva.estabelecimentoNome}',
-                                style: GoogleFonts.dmSans(
-                                    fontSize: 13, color: AppColors.gray),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: reserva.status == 'CONFIRMADA'
-                                ? AppColors.primaryLight
-                                : reserva.status == 'CANCELADA'
-                                    ? const Color(0xFFFAECE7)
-                                    : AppColors.secondaryLight,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            reserva.status == 'CONFIRMADA'
-                                ? 'Confirmada'
-                                : reserva.status == 'CANCELADA'
-                                    ? 'Cancelada'
-                                    : 'Pendente',
-                            style: GoogleFonts.dmSans(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: reserva.status == 'CONFIRMADA'
-                                  ? AppColors.primary
-                                  : reserva.status == 'CANCELADA'
-                                      ? AppColors.error
-                                      : AppColors.secondary,
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Usuário: ${reserva.estabelecimentoNome}',
+                                  style: GoogleFonts.dmSans(
+                                      fontSize: 13, color: AppColors.gray),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(height: 1, color: AppColors.grayLight),
-                    const SizedBox(height: 12),
-                    // Detalhes da reserva
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.grayLight,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today,
-                                  size: 14, color: AppColors.gray),
-                              const SizedBox(width: 4),
-                              Text(
-                                _formatarData(reserva.data),
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 12,
-                                  color: AppColors.gray,
-                                ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: reserva.status == 'CONFIRMADA'
+                                  ? AppColors.primaryLight
+                                  : reserva.status == 'CANCELADA'
+                                      ? const Color(0xFFFAECE7)
+                                      : AppColors.secondaryLight,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              reserva.status == 'CONFIRMADA'
+                                  ? 'Confirmada'
+                                  : reserva.status == 'CANCELADA'
+                                      ? 'Cancelada'
+                                      : 'Pendente',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: reserva.status == 'CONFIRMADA'
+                                    ? AppColors.primary
+                                    : reserva.status == 'CANCELADA'
+                                        ? AppColors.error
+                                        : AppColors.secondary,
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.grayLight,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.access_time,
-                                  size: 14, color: AppColors.gray),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${Reserva.formatarHora(reserva.horaInicio)} – ${Reserva.formatarHora(reserva.horaFim)}',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 12,
-                                  color: AppColors.gray,
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(height: 1, color: AppColors.grayLight),
+                      const SizedBox(height: 12),
+                      // Detalhes da reserva
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.grayLight,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today,
+                                    size: 14, color: AppColors.gray),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _formatarData(reserva.data),
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 12,
+                                    color: AppColors.gray,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.grayLight,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.access_time,
+                                    size: 14, color: AppColors.gray),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${Reserva.formatarHora(reserva.horaInicio)} – ${Reserva.formatarHora(reserva.horaFim)}',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 12,
+                                    color: AppColors.gray,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            )
-          );
+              ));
         },
-      ),
-    );
-  }
-}
-
-// ── PERFIL ───────────────────────────────────────────────────────────────────
-
-class _PerfilOwnerTab extends StatelessWidget {
-  final _authService = AuthService();
-
-  void _logout(BuildContext context) async {
-    await _authService.logout();
-    context.go(AppRoutes.login);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const SizedBox(height: 40),
-
-          const CircleAvatar(
-            radius: 46,
-            backgroundColor: AppColors.primary,
-            child: Icon(
-              Icons.person,
-              size: 42,
-              color: Colors.white,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          Text(
-            'Proprietário',
-            style: GoogleFonts.dmSans(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 40),
-
-          ElevatedButton.icon(
-            onPressed: () =>
-                context.push(AppRoutes.criarEstabelecimento),
-            icon: const Icon(Icons.business),
-            label: const Text('Meu Estabelecimento'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          ElevatedButton.icon(
-            onPressed: () => context.push(AppRoutes.criarQuadra),
-            icon: const Icon(Icons.sports_soccer),
-            label: const Text('Cadastrar Quadra'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
-            ),
-          ),
-
-          const Spacer(),
-
-          OutlinedButton.icon(
-            onPressed: () => _logout(context),
-            icon: const Icon(Icons.logout),
-            label: const Text('Sair'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.error,
-              side: const BorderSide(color: AppColors.error),
-              minimumSize: const Size(double.infinity, 50),
-            ),
-          ),
-        ],
       ),
     );
   }

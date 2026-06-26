@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:match_up_sports/services/api_config.dart';
 import 'package:match_up_sports/services/session_manager.dart';
 
 class AuthService {
@@ -12,7 +12,7 @@ class AuthService {
   AuthService._internal();
 
   final Dio _dio = Dio();
-  final String _baseUrl = 'http://localhost:3000/autenticacao';
+  final String _baseUrl = '${ApiConfig.baseUrl}/autenticacao';
   final SessionManager _sessionManager = SessionManager();
 
   Future<int?> login(String email, String senha) async {
@@ -87,16 +87,19 @@ class AuthService {
   }
 
   Future<String?> getToken() async {
+    await _sessionManager.loadSessions();
     final activeSession = _sessionManager.getActiveSession();
     return activeSession?.token;
   }
 
   Future<int?> getTipo() async {
+    await _sessionManager.loadSessions();
     final activeSession = _sessionManager.getActiveSession();
     return activeSession?.tipo;
   }
 
   Future<int?> getUserId() async {
+    await _sessionManager.loadSessions();
     final activeSession = _sessionManager.getActiveSession();
     return activeSession?.userId;
   }

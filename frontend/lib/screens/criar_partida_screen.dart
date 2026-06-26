@@ -94,7 +94,7 @@ class _CriarPartidaScreenState
             const SizedBox(height: 16),
 
             DropdownButtonFormField<String>(
-              value: tipoPartida,
+              initialValue: tipoPartida,
               decoration: const InputDecoration(
                 labelText: 'Tipo da partida',
                 border: OutlineInputBorder(),

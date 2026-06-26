@@ -8,13 +8,9 @@ export const createEstabelecimento = async (req: Request, res: Response) => {
         return res.status(400).json({ message: "Os campos nome_local e endereco são obrigatórios." });
     }
 
-    if (proprietario_id === undefined || proprietario_id === null) {
-        return res.status(400).json({ message: "O campo proprietario_id é obrigatório." });
-    }
-
-    const proprietarioIdNumber = Number(proprietario_id);
-    if (Number.isNaN(proprietarioIdNumber)) {
-        return res.status(400).json({ message: "O campo proprietario_id deve ser um número válido." });
+    const proprietarioIdNumber = Number(proprietario_id ?? req.user?.id);
+    if (!proprietarioIdNumber || Number.isNaN(proprietarioIdNumber)) {
+        return res.status(400).json({ message: "Não foi possível identificar o proprietário do estabelecimento." });
     }
 
     try {
@@ -39,6 +35,21 @@ export const createEstabelecimento = async (req: Request, res: Response) => {
         console.error("Erro ao criar estabelecimento:", error);
         return res.status(500).json({ message: "Erro interno ao criar estabelecimento." });
     }
+};
+
+export const getEstabelecimentosDoUsuarioLogado = async (req: Request, res: Response) => {
+    const proprietarioId = Number(req.user?.id);
+
+    if (!proprietarioId) {
+        return res.status(401).json({ message: "Usuário não autenticado." });
+    }
+
+    const estabelecimentos = await prisma.estabelecimento.findMany({
+        where: { proprietario_id: proprietarioId },
+        orderBy: { nome_local: "asc" },
+    });
+
+    return res.json(estabelecimentos);
 };
 
 export const getEstabelecimentos = async (req: Request, res: Response) => {
