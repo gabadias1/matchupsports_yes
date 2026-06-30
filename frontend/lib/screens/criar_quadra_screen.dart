@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:match_up_sports/models/estabelecimento.dart';
+import 'package:match_up_sports/services/estabelecimento_service.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
 import 'package:match_up_sports/services/estabelecimento_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
@@ -18,7 +20,11 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
   final _identificacaoController = TextEditingController();
   final _descricaoController = TextEditingController();
   final _valorHoraController = TextEditingController();
-  
+  final estabelecimentoService = EstabelecimentoService();
+  List<EstabelecimentoModel> estabelecimentos = [];
+  bool _loadingEstabelecimentos = true;
+  int? _estabelecimentoSelecionado;
+
   String? _selectedEsporte;
   bool _isLoading = false;
   bool _isLoadingEstabelecimentos = true;
@@ -45,28 +51,34 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
     super.dispose();
   }
 
-  Future<void> _carregarEstabelecimentos() async {
+  @override
+  void initState() {
+    super.initState();
+    _loadEstabelecimentos();
+  }
+
+  Future<void> _loadEstabelecimentos() async {
     try {
-      final estabelecimentos = await EstabelecimentoService.getMeusEstabelecimentos();
-      if (mounted) {
-        setState(() {
-          _estabelecimentos = estabelecimentos;
-          _isLoadingEstabelecimentos = false;
-          if (estabelecimentos.isNotEmpty) {
-            _estabelecimentoSelecionado = estabelecimentos.first;
-          }
-        });
-      }
+      final lista = await estabelecimentoService.meusEstabelecimentos();
+      if (!mounted) return;
+      setState(() {
+        estabelecimentos = lista;
+        _loadingEstabelecimentos = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() => _isLoadingEstabelecimentos = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception: ', '')),
-            backgroundColor: AppColors.error,
+      if (!mounted) return;
+      setState(() {
+        _loadingEstabelecimentos = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.error,
+          content: Text(
+            e.toString().replaceAll('Exception: ', ''),
+            style: GoogleFonts.dmSans(color: Colors.white),
           ),
-        );
-      }
+        ),
+      );
     }
   }
 
@@ -110,7 +122,7 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
       final quadra = await QuadraService.createQuadra(
         identificacao: _identificacaoController.text,
         descricao: _descricaoController.text,
-        estabelecimentoId: _estabelecimentoSelecionado!.id,
+        estabelecimentoId: _estabelecimentoSelecionado!,
         esporte: _selectedEsporte!,
         valorHora: double.parse(_valorHoraController.text),
       );
@@ -356,65 +368,57 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Campo: Estabelecimento
-                Text(
-                  'Estabelecimento',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.dark,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (_isLoadingEstabelecimentos)
-                  const Center(child: CircularProgressIndicator())
-                else if (_estabelecimentos.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.grayLight),
-                    ),
-                    child: Text(
-                      'Nenhum estabelecimento encontrado para este perfil. Cadastre um primeiro.',
-                      style: GoogleFonts.dmSans(color: AppColors.gray),
-                    ),
-                  )
-                else
-                  DropdownButtonFormField<EstabelecimentoModel>(
-                    value: _estabelecimentoSelecionado,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: AppColors.grayLight),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    items: _estabelecimentos.map((estabelecimento) {
-                      return DropdownMenuItem<EstabelecimentoModel>(
-                        value: estabelecimento,
-                        child: Text(
-                          '${estabelecimento.nomeLocal} — ${estabelecimento.endereco}',
-                          style: GoogleFonts.dmSans(color: AppColors.dark),
+                _loadingEstabelecimentos
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : DropdownButtonFormField<int>(
+                        initialValue: _estabelecimentoSelecionado,
+
+                        decoration: InputDecoration(
+                          hintText: 'Selecione um estabelecimento',
+                          hintStyle: GoogleFonts.dmSans(
+                            color: AppColors.grayLight,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: AppColors.grayLight,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => _estabelecimentoSelecionado = value);
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Selecione um estabelecimento';
-                      }
-                      return null;
-                    },
-                  ),
+
+                        items: estabelecimentos.map((estabelecimento) {
+                          return DropdownMenuItem<int>(
+                            value: estabelecimento.id,
+                            child: Text(
+                              estabelecimento.nomeLocal,
+                              style: GoogleFonts.dmSans(
+                                color: AppColors.dark,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+
+                        onChanged: (value) {
+                          setState(() {
+                            _estabelecimentoSelecionado = value;
+                          });
+                        },
+
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Selecione um estabelecimento';
+                          }
+                          return null;
+                        },
+                      ),
                 const SizedBox(height: 20),
 
                 // Campo: Valor por Hora

@@ -275,7 +275,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
           Container(
             width: 80,
             height: 80,
+
             decoration: const BoxDecoration(
+
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 begin: Alignment.topLeft,

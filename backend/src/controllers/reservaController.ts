@@ -35,7 +35,7 @@ export const createReserva = async (req: Request, res: Response) => {
 
   // Verifica se a quadra existe
   try {
-    await prisma.quadra.findUniqueOrThrow({ where: { id: Number(quadra_id) } });
+    const quadra = await prisma.quadra.findUniqueOrThrow({ where: { id: Number(quadra_id) } });
   } catch {
     return res.status(404).json({ message: "Quadra não encontrada." });
   }

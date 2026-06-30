@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:match_up_sports/routes/app_router.dart';
 import 'package:match_up_sports/services/estabelecimento_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
 
@@ -53,7 +52,7 @@ class _CriarEstabelecimentoScreenState extends State<CriarEstabelecimentoScreen>
 
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
-          context.go(AppRoutes.home);
+          context.pop();
         }
       }
     } catch (e) {

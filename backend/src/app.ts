@@ -8,6 +8,7 @@ import disponibilidadeRoutes from "./routes/disponibilidadeRoutes";
 import reservaRoutes from "./routes/reservaRoutes";
 import partidaRoutes from "./routes/partidaRoutes";
 import conviteRoutes from "./routes/conviteRoutes";
+import chatRoutes from "./routes/chatRoutes";
 import { getMatchesDisponiveis } from "./controllers/partidaController";
 import swaggerUi from "swagger-ui-express";
 import { setupSwagger } from "./config/swagger";
@@ -27,7 +28,7 @@ app.use("/disponibilidades", disponibilidadeRoutes);
 app.use("/reservas", reservaRoutes); // Apenas uma declaração para reservas
 app.use("/partidas", partidaRoutes);
 app.use("/convites", conviteRoutes);
-
+app.use("/chat", chatRoutes);
 app.get("/match", getMatchesDisponiveis);
 
 app.get("/", (req, res) => {

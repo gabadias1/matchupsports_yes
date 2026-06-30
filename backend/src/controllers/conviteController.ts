@@ -48,7 +48,7 @@ export const aceitarConvite = async (req: Request, res: Response) => {
         try {
             await prisma.$transaction(async (prisma) => {
                 const partida = await prisma.partida.findUniqueOrThrow({
-                    where: { id: convite.partida_id, include: { reserva: true } },
+                    where: { id: convite.partida_id }, include: { reserva: true },
                 });
                 if (partida.quantidade_atual >= partida.vagas) {
                     return res.status(400).json({ message: "Partida cheia. Não é possível aceitar o convite." });
@@ -75,20 +75,21 @@ export const aceitarConvite = async (req: Request, res: Response) => {
                     where: { id: convite.id },
                     data: { usado: true },
                 });
-                const chat = await prisma.chatReserva.findUnique({
+                const chat = await prisma.chatReserva.findUniqueOrThrow({
                     where:{
                         reserva_id: partida.reserva_id
                     }
                 });
                 await prisma.chatParticipante.create({
                     data:{
-                        chat_id:chat.id,
-                        usuario_id:req.user.id
+                        chat_id: chat.id,
+                        usuario_id: req.user.id
                     }
                 });
                 return res.status(200).json({ message: "Convite aceito com sucesso." });
         })} 
         catch (error) {
+            console.log(error);
             return res.status(400).json({ message: "Partida não encontrada." });
         }
     } catch (error) {

@@ -27,25 +27,100 @@ export const meusChats = async(req: Request, res: Response)=>{
     return res.json(chats);
 }
 
-export const enviarMensagem = async(req: Request, res: Response)=>{
-    const chat = await prisma.chatReserva.findUniqueOrThrow({
-        where:{
-            id:Number(req.params.id)
-        },
-        include:{
-            participantes:true
+export const enviarMensagem = async (req: Request, res: Response) => {
+    try {
+        const reservaId = Number(req.params.reservaId);
+        const { mensagem } = req.body;
+        const chat = await prisma.chatReserva.findUniqueOrThrow({
+            where:{
+                reserva_id: reservaId
+            },
+            include:{
+                participantes:true
+            }
+        });
+        const isParticipante =
+            chat.participantes.some(
+                (participante: { usuario_id: any; }) =>
+                    participante.usuario_id === req.user.id
+            );
+        if(!isParticipante){
+            return res.status(403).json({
+                message:
+                "Você não participa deste chat."
+            });
         }
-    });
-    const isParticipante = chat.participantes.some((participante: { usuario_id: string; }) => participante.usuario_id === req.user.id);
-    if(!isParticipante){
-        return res.status(403).json({message:"Você não é participante deste chat."});       
+        const novaMensagem =
+            await prisma.mensagemChat.create({
+                data:{
+                    chat_id: chat.id,
+                    usuario_id:req.user.id,
+                    mensagem
+                },
+                include:{
+                    usuario:true
+                }
+            });
+        return res.status(201).json(novaMensagem);
+    } catch(error){
+        console.error(
+            "Erro ao enviar mensagem:",
+            error
+        );
+        return res.status(400).json({
+            message:
+            "Erro ao enviar mensagem."
+        });
     }
-    await prisma.mensagemChat.create({
-        data:{
-            chat_id:Number(req.params.id),
-            usuario_id:req.user.id,
-            mensagem:req.body.mensagem
+};
+
+export const recuperarMensagens = async (req: Request, res: Response) => {
+    const { reserva_id, page = "0" } = req.query;
+    const limit = 50;
+    const pagina = Number(page);
+    try {
+        const chat = await prisma.chatReserva.findUnique({
+            where: {
+                reserva_id: Number(reserva_id),
+            },
+        });
+        if (!chat) {
+            return res.status(404).json({
+                message: "Chat não encontrado.",
+            });
         }
-    })
-    return res.status(200).json({message:"Mensagem enviada com sucesso."});
-}
+        const mensagens = await prisma.mensagemChat.findMany({
+            where: {
+                chat_id: chat.id,
+            },
+            include: {
+                usuario: {
+                    select: {
+                        id: true,
+                        nome: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            skip: pagina * limit,
+            take: limit,
+        });
+        const total = await prisma.mensagemChat.count({
+            where:{
+                chat_id: chat.id
+            }
+        });
+        return res.status(200).json({
+            page: pagina,
+            limit,
+            hasMore: (pagina + 1) * limit < total,
+            mensagens: mensagens.reverse(),
+        });
+    } catch(error){
+        return res.status(400).json({
+            message: "Erro ao recuperar mensagens.",
+        });
+    }
+};

@@ -32,7 +32,7 @@ class SessionManager {
         
         _activeSessionId = prefs.getString('active_session_id');
       } catch (e) {
-        print('Erro ao carregar sessões: $e');
+        throw Exception(e);
       }
     }
   }
