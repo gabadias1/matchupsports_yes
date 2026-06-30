@@ -57,7 +57,11 @@ export const createPartida = async (req: Request, res: Response) => {
 
 export const entrarPartida = async (req: Request, res: Response) => {
     const { partidaId } = req.params;
-    const userId = req.user?.id;
+    const userId = Number(req.user?.id);
+
+    if (!userId) {
+        return res.status(401).json({ message: "Usuário não autenticado." });
+    }
 
     try {
         await prisma.$transaction(async (tx) => {

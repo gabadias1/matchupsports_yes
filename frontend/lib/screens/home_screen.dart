@@ -271,10 +271,14 @@ class _HomeTabState extends State<_HomeTab> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.white.withOpacity(0.08),
+
+                        color: AppColors.white.withValues(alpha: 0.08),
+
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                            color: AppColors.white.withOpacity(0.12)),
+
+                            color: AppColors.white.withValues(alpha: 0.12)),
+
                       ),
                       child: Row(
                         children: [
@@ -318,7 +322,9 @@ class _HomeTabState extends State<_HomeTab> {
                             'Encontre jogadores e complete seu time agora mesmo!',
                             style: GoogleFonts.dmSans(
                               fontSize: 12,
-                              color: AppColors.white.withOpacity(0.85),
+
+                              color: AppColors.white.withValues(alpha: 0.85),
+
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -512,13 +518,35 @@ class _HomeTabState extends State<_HomeTab> {
       });
 
       try {
-        final dateStr = selectedDate.toIso8601String().split('T').first;
-        final slots = await ReservaService.getAvailableSlots(
-            quadraId: court['id'], date: dateStr);
-        final filtered = slots.where((s) => (s['start'] ?? 0) >= 600).toList();
+
+        DateTime? matchingDate;
+        List<Map<String, int>>? matchingSlots;
+
+        for (int offset = 0; offset <= 7; offset++) {
+          final candidateDate = selectedDate.add(Duration(days: offset));
+          final dateStr = candidateDate.toIso8601String().split('T').first;
+
+          final slots = await ReservaService.getAvailableSlots(
+            quadraId: court['id'],
+            date: dateStr,
+          );
+
+          if (slots.isNotEmpty) {
+            matchingDate = candidateDate;
+            matchingSlots = slots;
+            break;
+          }
+        }
+
         setStateDialog(() {
-          availableSlots = filtered;
-          selectedSlotIndex = filtered.isNotEmpty ? 0 : null;
+          if (matchingDate != null && matchingSlots != null) {
+            selectedDate = matchingDate;
+            availableSlots = matchingSlots;
+            selectedSlotIndex = 0;
+          } else {
+            availableSlots = [];
+            selectedSlotIndex = null;
+          }
           slotsLoaded = true;
         });
       } catch (_) {
@@ -830,9 +858,13 @@ class _MatchTabState extends State<_MatchTab> {
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
-                        child: const Icon(Icons.person,
-                          color: AppColors.primary),
+
+                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+
+                          child: const Icon(Icons.person,
+
+                              color: AppColors.primary),
+
                         ),
                         title: Text(
                           partida.nomesJogadores[i],
@@ -1988,13 +2020,18 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary.withOpacity(0.1),
-            AppColors.secondary.withOpacity(0.1),
+
+            AppColors.primary.withValues(alpha: 0.1),
+
+            AppColors.secondary.withValues(alpha: 0.1),
+
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.primary.withOpacity(0.2),
+
+          color: AppColors.primary.withValues(alpha: 0.2),
+
           width: 1,
         ),
       ),
@@ -2004,7 +2041,9 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
           Container(
             width: 80,
             height: 80,
+
             decoration: const BoxDecoration(
+
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -2117,7 +2156,9 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withOpacity(0.2),
+
+          color: color.withValues(alpha: 0.2),
+
           width: 1.5,
         ),
       ),
@@ -2128,7 +2169,9 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+
+              color: color.withValues(alpha: 0.1),
+
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
@@ -2393,7 +2436,9 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.secondary.withOpacity(0.2),
+
+                      color: AppColors.secondary.withValues(alpha: 0.2),
+
                       width: 1,
                     ),
                   ),
@@ -2502,7 +2547,9 @@ class _PerfilTabWidgetState extends State<_PerfilTabWidget> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2),
+
+                      color: AppColors.primary.withValues(alpha: 0.2),
+
                       width: 1,
                     ),
                   ),

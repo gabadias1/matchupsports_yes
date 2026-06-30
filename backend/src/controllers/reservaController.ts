@@ -140,6 +140,11 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
 
   const reservaData = parseDateOnly(String(date));
   if (!reservaData || Number.isNaN(reservaData.getTime())) {
+    const fallback = new Date(String(date));
+    if (!Number.isNaN(fallback.getTime())) {
+      const normalized = new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate());
+      return res.json([]);
+    }
     return res.status(400).json({ message: 'Data inválida para consulta de horários.' });
   }
 
@@ -159,6 +164,10 @@ export const getAvailableSlots = async (req: Request, res: Response) => {
   const disponibilidades = await prisma.disponibilidade.findMany({
     where: { quadra_id: Number(quadra_id), dia_semana: diaSemana, ativo: true },
   });
+
+  if (!disponibilidades.length) {
+    return res.json([]);
+  }
 
   // Buscar reservas existentes para a quadra na data
   const startOfDay = new Date(reservaData);

@@ -4,7 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/models/estabelecimento.dart';
 import 'package:match_up_sports/services/estabelecimento_service.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
+import 'package:match_up_sports/services/estabelecimento_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
+import 'package:match_up_sports/models/estabelecimento.dart';
 
 class CriarQuadraScreen extends StatefulWidget {
   const CriarQuadraScreen({super.key});
@@ -25,12 +27,21 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
 
   String? _selectedEsporte;
   bool _isLoading = false;
+  bool _isLoadingEstabelecimentos = true;
+  List<EstabelecimentoModel> _estabelecimentos = [];
+  EstabelecimentoModel? _estabelecimentoSelecionado;
 
   final List<Map<String, String>> _esportes = [
     {'nome': 'Futebol', 'emoji': '⚽'},
     {'nome': 'Vôlei', 'emoji': '🏐'},
     {'nome': 'Basquete', 'emoji': '🏀'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarEstabelecimentos();
+  }
 
   @override
   void dispose() {
@@ -91,6 +102,21 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
     }
 
     setState(() => _isLoading = true);
+
+    if (_estabelecimentoSelecionado == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Cadastre ou selecione um estabelecimento antes de criar a quadra',
+            style: GoogleFonts.dmSans(color: Colors.white),
+          ),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      setState(() => _isLoading = false);
+      return;
+    }
 
     try {
       final quadra = await QuadraService.createQuadra(
@@ -460,7 +486,7 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white.withOpacity(0.7),
+                                Colors.white.withValues(alpha: 0.7),
                               ),
                             ),
                           )

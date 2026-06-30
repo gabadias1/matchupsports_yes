@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:match_up_sports/services/api_config.dart';
 import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/models/usuario_model.dart';
 
 class UsuarioService {
-  static const String _baseUrl = 'http://localhost:3000/usuarios';
+  static final String _baseUrl = '${ApiConfig.baseUrl}/usuarios';
   static final _dio = Dio(
     BaseOptions(
       baseUrl: _baseUrl,

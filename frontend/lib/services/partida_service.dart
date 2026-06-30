@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:match_up_sports/services/api_config.dart';
 import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/models/partida.dart';
 
 class PartidaService {
-  static const String _baseUrl = 'http://localhost:3000';
+  static final String _baseUrl = ApiConfig.baseUrl;
   static final _dio = Dio(BaseOptions(baseUrl: _baseUrl));
   static final _authService = AuthService();
 

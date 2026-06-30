@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:match_up_sports/models/estabelecimento.dart';
+import 'package:match_up_sports/services/api_config.dart';
 import 'package:match_up_sports/services/auth_service.dart';
 
 class EstabelecimentoService {
-  static const String _baseUrl = 'http://localhost:3000';
+  static final String _baseUrl = ApiConfig.baseUrl;
   static final _dio = Dio(BaseOptions(baseUrl: _baseUrl));
   static final _authService = AuthService();
 
@@ -11,6 +12,49 @@ class EstabelecimentoService {
     final response = await _dio.get('/estabelecimentos');
     final List<dynamic> data = response.data;
     return data.map((json) => EstabelecimentoModel.fromJson(json)).toList();
+  }
+
+  static Future<List<EstabelecimentoModel>> getMeusEstabelecimentos() async {
+    final token = await _authService.getToken();
+
+    if (token == null) {
+      throw Exception('Token não encontrado. Faça login novamente.');
+    }
+
+    try {
+      final response = await _dio.get(
+        '/estabelecimentos/me',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      final List<dynamic> data = response.data;
+      return data.map((json) => EstabelecimentoModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw Exception('Sessão expirada. Faça login novamente.');
+      }
+
+      if (e.response?.statusCode == 404) {
+        try {
+          final proprietarioId = await _authService.getUserId();
+          if (proprietarioId == null) {
+            throw Exception('Proprietário não identificado. Faça login novamente.');
+          }
+
+          final fallbackResponse = await _dio.get(
+            '/estabelecimentos/proprietario/$proprietarioId',
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+          );
+
+          final List<dynamic> fallbackData = fallbackResponse.data;
+          return fallbackData.map((json) => EstabelecimentoModel.fromJson(json)).toList();
+        } on DioException catch (fallbackError) {
+          throw Exception('Erro ao buscar seus estabelecimentos: ${fallbackError.message}');
+        }
+      }
+
+      throw Exception('Erro ao buscar seus estabelecimentos: ${e.message}');
+    }
   }
 
   static Future<EstabelecimentoModel> createEstabelecimento({

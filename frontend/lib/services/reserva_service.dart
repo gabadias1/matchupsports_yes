@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:match_up_sports/services/api_config.dart';
 import 'package:match_up_sports/services/auth_service.dart';
 import 'package:match_up_sports/models/reserva.dart';
 
 class ReservaService {
-  static const String _baseUrl = 'http://localhost:3000/reservas';
+  static final String _baseUrl = '${ApiConfig.baseUrl}/reservas/';
   static final _dio = Dio(BaseOptions(baseUrl: _baseUrl));
   static final _authService = AuthService();
 
@@ -43,20 +44,36 @@ class ReservaService {
   static Future<List<Reserva>> getMinhasReservas() async {
     try {
       final token = await _authService.getToken();
-      
+
       final response = await _dio.get(
-        '/minhas',
+        'me',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
           },
         ),
       );
-      
-      return (response.data as List)
-          .map((json) => Reserva.fromJson(json))
-          .toList();
+
+      final List<dynamic> data = response.data is List ? response.data : [];
+      return data.map((json) => Reserva.fromJson(json)).toList();
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        try {
+          final token = await _authService.getToken();
+          final fallbackResponse = await _dio.get(
+            'minhas',
+            options: Options(
+              headers: {
+                'Authorization': 'Bearer $token',
+              },
+            ),
+          );
+          final List<dynamic> data = fallbackResponse.data is List ? fallbackResponse.data : [];
+          return data.map((json) => Reserva.fromJson(json)).toList();
+        } on DioException catch (fallbackError) {
+          throw Exception('Erro ao buscar reservas: ${fallbackError.message}');
+        }
+      }
       throw Exception('Erro ao buscar reservas: ${e.message}');
     }
   }
@@ -67,7 +84,7 @@ class ReservaService {
       final token = await _authService.getToken();
       
       final response = await _dio.get(
-        '/dono',
+        'dono',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -86,16 +103,21 @@ class ReservaService {
   static Future<List<Map<String, int>>> getAvailableSlots({required int quadraId, required String date}) async {
     try {
       final token = await _authService.getToken();
-      final response = await _dio.get('/available', queryParameters: {
-        'quadra_id': quadraId,
-        'date': date,
-      }, options: Options(
+
+      final response = await _dio.get(
+        'available',
+        queryParameters: {
+          'quadra_id': quadraId,
+          'date': date,
+        },
+        options: Options(
           headers: {
             'Authorization': 'Bearer $token',
           },
-        ),);
+        ),
+      );
 
-      final List data = response.data as List;
+      final List data = response.data is List ? response.data as List : [];
       return data.map((item) => {
         'start': item['start'] as int,
         'end': item['end'] as int,
@@ -110,7 +132,7 @@ class ReservaService {
       final token = await _authService.getToken();
       
       await _dio.delete(
-        '/$reservaId',
+        '$reservaId',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -126,7 +148,7 @@ class ReservaService {
     try {
       final token = await _authService.getToken();
       _dio.options.headers['Authorization'] = 'Bearer $token';
-      await _dio.put('/$reservaId/confirmar');
+      await _dio.put('$reservaId/confirmar');
     } on DioException catch (e) {
       throw Exception('Erro ao confirmar reserva: ${e.message}');
     }
@@ -136,7 +158,7 @@ class ReservaService {
     try {
       final token = await _authService.getToken();
       _dio.options.headers['Authorization'] = 'Bearer $token';
-      await _dio.put('/$reservaId/recusar');
+      await _dio.put('$reservaId/recusar');
     } on DioException catch (e) {
       throw Exception('Erro ao recusar reserva: ${e.message}');
     }
