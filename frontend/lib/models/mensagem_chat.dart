@@ -19,7 +19,7 @@ class MensagemChat {
       mensagem: json['mensagem'],
       createdAt:
         DateTime.parse(
-          json['created_at'],
+          json['createdAt'],
         ),
       usuarioId:
         json['usuario']['id'],

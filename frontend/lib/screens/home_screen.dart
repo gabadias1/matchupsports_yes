@@ -1152,341 +1152,362 @@ class _MatchTabState extends State<_MatchTab> {
       );
     }
 
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Container(
-            color: AppColors.dark,
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Partidas Disponíveis',
-                  style: GoogleFonts.bebasNeue(
-                    fontSize: 28,
-                    color: AppColors.white,
-                    letterSpacing: 1,
+  return RefreshIndicator(
+    color: AppColors.primary,
+    onRefresh: _loadPartidas,
+    child: CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              color: AppColors.dark,
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Partidas Disponíveis',
+                    style: GoogleFonts.bebasNeue(
+                      fontSize: 28,
+                      color: AppColors.white,
+                      letterSpacing: 1,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_partidas.length} partida(s) aberta(s)',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 13,
-                    color: AppColors.gray,
+                  const SizedBox(height: 8),
+                  Text(
+                    '${_partidas.length} partida(s) aberta(s)',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 13,
+                      color: AppColors.gray,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        // CARD DE CONVITE
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.link,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Entrar com convite',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _conviteController,
-                      decoration: InputDecoration(
-                        hintText: 'Cole o token do convite',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.login),
-                        label: const Text('Entrar na partida'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                        ),
-                        onPressed: _entrarPorConvite,
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
             ),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.all(16),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final partida = _partidas[index];
-                final int vagasDisponiveis =
-                    partida.vagas - partida.quantidade_atual;
-                final bool isCheia = vagasDisponiveis <= 0;
-                final bool estaNaPartida = _meuUserId != null &&
-                    partida.idsUsuarios.contains(_meuUserId);
-                final bool souDono = _meuUserId == partida.criadorId;
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: AppColors.grayLight),
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => _mostrarJogadores(context, partida),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+          // CARD DE CONVITE
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  partida.quadraNome ?? 'Partida #${partida.id}',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.dark,
-                                  ),
-                                ),
-                              ),
-                              if (souDono)
-                                PopupMenuButton<String>(
-                                  icon: const Icon(Icons.more_vert),
-                                  onSelected: (value) async {
-                                    switch (value) {
-                                      case 'abrir':
-                                        await _alterarTipoPartida(partida.id, 'ABERTA');
-                                        break;
-
-                                      case 'fechar':
-                                        await _alterarTipoPartida(partida.id, 'FECHADA');
-                                        break;
-
-                                      case 'convite':
-                                        await _gerarConvite(partida.id);
-                                        break;
-
-                                      case 'cancelar':
-                                        await _cancelarPartida(partida.id);
-                                        break;
-
-                                      case 'gerenciar':
-                                        _mostrarJogadoresGerenciavel(context, partida);
-                                        break;
-                                    }
-                                  },
-                                  itemBuilder: (_) => [
-                                    const PopupMenuItem(
-                                      value: 'abrir',
-                                      child: Text('Abrir partida'),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'fechar',
-                                      child: Text('Fechar partida'),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'gerenciar',
-                                      child: Text('Gerenciar jogadores'),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'convite',
-                                      child: Text('Gerar convite'),
-                                    ),
-                                    const PopupMenuDivider(),
-                                    const PopupMenuItem(
-                                      value: 'cancelar',
-                                      child: Text(
-                                        'Cancelar partida',
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: vagasDisponiveis > 0
-                                      ? AppColors.primary
-                                      : AppColors.gray,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  '$vagasDisponiveis vaga${vagasDisponiveis != 1 ? 's' : ''}',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          const Icon(
+                            Icons.link,
+                            color: AppColors.primary,
                           ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_outlined,
-                                  size: 16, color: AppColors.gray),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Local: ${partida.estabelecimentoNome ?? 'Não informado'}',
-                                  style: GoogleFonts.dmSans(
-                                      fontSize: 13, color: AppColors.gray),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.calendar_today_outlined,
-                                  size: 16, color: AppColors.gray),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${partida.formatarData()} • ${partida.formatarHora(partida.horaInicio)} às ${partida.formatarHora(partida.horaFim)}',
-
-                                style: GoogleFonts.dmSans(
-                                    fontSize: 13, color: AppColors.gray),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.person_outline,
-                                  size: 16, color: AppColors.gray),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Organizado por: ${partida.criadorNome ?? 'Anônimo'}',
-                                  style: GoogleFonts.dmSans(
-                                      fontSize: 13, color: AppColors.gray),
-                                ),
-                              ),
-                              const Icon(Icons.people_outline,
-                                  size: 16, color: AppColors.gray),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${partida.quantidade_atual}/${partida.vagas}',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.gray,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.sports_soccer_outlined,
-                                  size: 16, color: AppColors.gray),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Esporte: ${partida.esporte ?? 'Não informado'}',
-                                style: GoogleFonts.dmSans(
-                                    fontSize: 13, color: AppColors.gray),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.door_front_door_outlined,
-                                  size: 16, color: AppColors.gray),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Tipo: ${partida.tipo.toString().split('.').last.toLowerCase() == 'aberta' ? 'Aberta' : 'Fechada'}',
-                                style: GoogleFonts.dmSans(
-                                    fontSize: 13, color: AppColors.gray),
-                              ),
-                            ],
-                          ),
-                          // Divisor e Botão Inteligente (Entrar/Sair)
-                          const SizedBox(height: 16),
-                          const Divider(height: 1, color: AppColors.grayLight),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _isJoining ||
-                                      souDono ||
-                                      (isCheia && !estaNaPartida)
-                                  ? null
-                                  : () => estaNaPartida
-                                      ? _sairDaPartida(partida.id)
-                                      : _entrarNaPartida(partida.id),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: estaNaPartida
-                                    ? Colors.redAccent
-                                    : AppColors.primary,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: _isJoining
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : Text(
-                                  souDono
-                                      ? 'Você é o Organizador'
-                                      : estaNaPartida
-                                          ? 'Sair da Partida'
-                                          : 'Entrar na Partida',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Entrar com convite',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _conviteController,
+                        decoration: InputDecoration(
+                          hintText: 'Cole o token do convite',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.login),
+                          label: const Text('Entrar na partida'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                          ),
+                          onPressed: _entrarPorConvite,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
-              childCount: _partidas.length,
+                ),
+              ),
             ),
           ),
-        ),
-      ],
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  final partida = _partidas[index];
+                  final int vagasDisponiveis =
+                      partida.vagas - partida.quantidade_atual;
+                  final bool isCheia = vagasDisponiveis <= 0;
+                  final bool estaNaPartida = _meuUserId != null &&
+                      partida.idsUsuarios.contains(_meuUserId);
+                  final bool souDono = _meuUserId == partida.criadorId;
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: AppColors.grayLight),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _mostrarJogadores(context, partida),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    partida.quadraNome ?? 'Partida #${partida.id}',
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.dark,
+                                    ),
+                                  ),
+                                ),
+                                if (estaNaPartida)
+                                  IconButton(
+                                    tooltip: 'Abrir chat',
+                                    icon: const Icon(
+                                      Icons.chat_outlined,
+                                      color: AppColors.primary,
+                                    ),
+                                    onPressed: () {
+                                      context.push(
+                                        AppRoutes.chat.replaceFirst(
+                                          ':reservaId',
+                                          partida.reservaId.toString(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                if (souDono)
+                                  PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert),
+                                    onSelected: (value) async {
+                                      switch (value) {
+                                        case 'abrir':
+                                          await _alterarTipoPartida(partida.id, 'ABERTA');
+                                          break;
+
+                                        case 'fechar':
+                                          await _alterarTipoPartida(partida.id, 'FECHADA');
+                                          break;
+
+                                        case 'convite':
+                                          await _gerarConvite(partida.id);
+                                          break;
+
+                                        case 'cancelar':
+                                          await _cancelarPartida(partida.id);
+                                          break;
+
+                                        case 'gerenciar':
+                                          _mostrarJogadoresGerenciavel(context, partida);
+                                          break;
+                                      }
+                                    },
+                                    itemBuilder: (_) => [
+                                      const PopupMenuItem(
+                                        value: 'abrir',
+                                        child: Text('Abrir partida'),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'fechar',
+                                        child: Text('Fechar partida'),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'gerenciar',
+                                        child: Text('Gerenciar jogadores'),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'convite',
+                                        child: Text('Gerar convite'),
+                                      ),
+                                      const PopupMenuDivider(),
+                                      const PopupMenuItem(
+                                        value: 'cancelar',
+                                        child: Text(
+                                          'Cancelar partida',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: vagasDisponiveis > 0
+                                        ? AppColors.primary
+                                        : AppColors.gray,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '$vagasDisponiveis vaga${vagasDisponiveis != 1 ? 's' : ''}',
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on_outlined,
+                                    size: 16, color: AppColors.gray),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Local: ${partida.estabelecimentoNome ?? 'Não informado'}',
+                                    style: GoogleFonts.dmSans(
+                                        fontSize: 13, color: AppColors.gray),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today_outlined,
+                                    size: 16, color: AppColors.gray),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${partida.formatarData()} • ${partida.formatarHora(partida.horaInicio)} às ${partida.formatarHora(partida.horaFim)}',
+
+                                  style: GoogleFonts.dmSans(
+                                      fontSize: 13, color: AppColors.gray),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.person_outline,
+                                    size: 16, color: AppColors.gray),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Organizado por: ${partida.criadorNome ?? 'Anônimo'}',
+                                    style: GoogleFonts.dmSans(
+                                        fontSize: 13, color: AppColors.gray),
+                                  ),
+                                ),
+                                const Icon(Icons.people_outline,
+                                    size: 16, color: AppColors.gray),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${partida.quantidade_atual}/${partida.vagas}',
+                                  style: GoogleFonts.dmSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.gray,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.sports_soccer_outlined,
+                                    size: 16, color: AppColors.gray),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Esporte: ${partida.esporte ?? 'Não informado'}',
+                                  style: GoogleFonts.dmSans(
+                                      fontSize: 13, color: AppColors.gray),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.door_front_door_outlined,
+                                    size: 16, color: AppColors.gray),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Tipo: ${partida.tipo.toString().split('.').last.toLowerCase() == 'aberta' ? 'Aberta' : 'Fechada'}',
+                                  style: GoogleFonts.dmSans(
+                                      fontSize: 13, color: AppColors.gray),
+                                ),
+                              ],
+                            ),
+                            // Divisor e Botão Inteligente (Entrar/Sair)
+                            const SizedBox(height: 16),
+                            const Divider(height: 1, color: AppColors.grayLight),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _isJoining ||
+                                        souDono ||
+                                        (isCheia && !estaNaPartida)
+                                    ? null
+                                    : () => estaNaPartida
+                                        ? _sairDaPartida(partida.id)
+                                        : _entrarNaPartida(partida.id),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: estaNaPartida
+                                      ? Colors.redAccent
+                                      : AppColors.primary,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: _isJoining
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    souDono
+                                        ? 'Você é o Organizador'
+                                        : estaNaPartida
+                                            ? 'Sair da Partida'
+                                            : 'Entrar na Partida',
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                childCount: _partidas.length,
+              ),
+            ),
+          ),
+        ],
+      )
     );
   }
 }
@@ -1651,6 +1672,23 @@ class _MinhasReservasTabState extends State<MinhasReservasTab> {
                         ),
                       ),
                     ),
+                    // Botão do chat somente se confirmada
+                    if (r.status == 'CONFIRMADA')
+                      IconButton(
+                        tooltip: 'Abrir chat',
+                        icon: const Icon(
+                          Icons.chat_outlined,
+                          color: AppColors.primary,
+                        ),
+                        onPressed: () {
+                          context.push(
+                            AppRoutes.chat.replaceFirst(
+                              ':reservaId',
+                              r.id.toString(),
+                            ),
+                          );
+                        },
+                      ),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 4),
@@ -2813,6 +2851,61 @@ class _MinhasPartidasTabState extends State<_MinhasPartidasTab> {
     }
   }
 
+  void _mostrarJogadores(BuildContext context, Partida partida) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Jogadores Confirmados (${partida.quantidade_atual}/${partida.vagas})',
+                style: GoogleFonts.bebasNeue(
+                    fontSize: 24, color: AppColors.dark, letterSpacing: 1),
+              ),
+              const SizedBox(height: 16),
+              if (partida.nomesJogadores.isEmpty)
+                Text(
+                  'Ninguém entrou nesta partida ainda. Seja o primeiro!',
+                  style: GoogleFonts.dmSans(color: AppColors.gray),
+                )
+              else
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: partida.nomesJogadores.length,
+                    itemBuilder: (context, i) {
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        child: const Icon(Icons.person,
+                          color: AppColors.primary),
+                        ),
+                        title: Text(
+                          partida.nomesJogadores[i],
+                          style: GoogleFonts.dmSans(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.dark,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _mostrarJogadoresGerenciavel(
     BuildContext context,
     Partida partida,
@@ -2939,6 +3032,30 @@ class _MinhasPartidasTabState extends State<_MinhasPartidasTab> {
     }
   }
 
+  Future<void> _sairDaPartida(int partidaId) async {
+    try {
+      await PartidaService.sairDaPartida(partidaId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Você saiu da partida.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        await (context.findAncestorStateOfType<_HomeScreenState>())
+            ?._refreshTodasPartidas();
+      }
+    } catch (e) {
+      if (mounted) {
+        final errorMessage = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(errorMessage), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -2988,164 +3105,209 @@ class _MinhasPartidasTabState extends State<_MinhasPartidasTab> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  /// TÍTULO
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          partida.quadraNome ??
-                              'Partida #${partida.id}',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                              if (souDono)
-                                PopupMenuButton<String>(
-                                  icon: const Icon(Icons.more_vert),
-                                  onSelected: (value) async {
-                                    switch (value) {
-                                      case 'convite':
-                                        await _gerarConvite(partida.id);
-                                        break;
-
-                                      case 'gerenciar':
-                                        _mostrarJogadoresGerenciavel(context, partida);
-                                        break;
-                                    }
-                                  },
-                                  itemBuilder: (_) => [
-                                    const PopupMenuItem(
-                                      value: 'gerenciar',
-                                      child: Text('Gerenciar jogadores'),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'convite',
-                                      child: Text('Gerar convite'),
-                                    ),
-                                  ],
-                                ),
-                      if (souDono)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Dono',
-                            style: GoogleFonts.dmSans(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    partida.estabelecimentoNome ?? '',
-                    style: GoogleFonts.dmSans(
-                      color: AppColors.gray,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    '${partida.formatarData()} • ${partida.formatarHora(partida.horaInicio)} às ${partida.formatarHora(partida.horaFim)}',
-                    style: GoogleFonts.dmSans(
-                      color: AppColors.gray,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    '${partida.quantidade_atual}/${partida.vagas} jogadores',
-                    style: GoogleFonts.dmSans(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  Text(
-                    '$vagasDisponiveis vaga(s) restante(s)',
-                    style: GoogleFonts.dmSans(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-
-                  if (souDono) ...[
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 12),
-
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _mostrarJogadores(context, partida),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// TÍTULO
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
-                            icon: Icon(
-                              partida.tipo == TipoPartida.ABERTA
-                                  ? Icons.lock
-                                  : Icons.lock_open,
+                          child: Text(
+                            partida.quadraNome ??
+                                'Partida #${partida.id}',
+                            style: GoogleFonts.dmSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                            label: Text(
-                              partida.tipo == TipoPartida.ABERTA
-                                  ? 'Fechar'
-                                  : 'Abrir',
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: partida.tipo == TipoPartida.ABERTA
-                                  ? Colors.red
-                                  : Colors.green,
-                              side: BorderSide(
-                                color: partida.tipo == TipoPartida.ABERTA
-                                    ? Colors.red
-                                    : Colors.green,
-                                width: 1.5,
-                              ),
-                            ),
-                            onPressed: () => _abrirFecharPartida(
-                              partida.id,
-                              partida.tipo == TipoPartida.ABERTA,
-                            ),
-                          )
-                        ),
-
-                        const SizedBox(width: 8),
-
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.cancel),
-                            label: const Text('Cancelar'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.redAccent,
-                            ),
-                            onPressed: () =>
-                                _cancelarPartida(partida.id),
                           ),
                         ),
+                        IconButton(
+                          tooltip: 'Abrir chat',
+                          icon: const Icon(
+                            Icons.chat_outlined,
+                            color: AppColors.primary,
+                          ),
+                          onPressed: () {
+                            context.push(
+                              AppRoutes.chat.replaceFirst(
+                                ':reservaId',
+                                partida.reservaId.toString(),
+                              ),
+                            );
+                          },
+                                  ),
+                                if (souDono)
+                                  PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert),
+                                    onSelected: (value) async {
+                                      switch (value) {
+                                        case 'convite':
+                                          await _gerarConvite(partida.id);
+                                          break;
+
+                                        case 'gerenciar':
+                                          _mostrarJogadoresGerenciavel(context, partida);
+                                          break;
+                                      }
+                                    },
+                                    itemBuilder: (_) => [
+                                      const PopupMenuItem(
+                                        value: 'gerenciar',
+                                        child: Text('Gerenciar jogadores'),
+                                      ),
+                                      const PopupMenuItem(
+                                        value: 'convite',
+                                        child: Text('Gerar convite'),
+                                      ),
+                                    ],
+                                  ),
+                        if (souDono)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Dono',
+                              style: GoogleFonts.dmSans(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
+
+                    const SizedBox(height: 12),
+
+                    Text(
+                      partida.estabelecimentoNome ?? '',
+                      style: GoogleFonts.dmSans(
+                        color: AppColors.gray,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    Text(
+                      '${partida.formatarData()} • ${partida.formatarHora(partida.horaInicio)} às ${partida.formatarHora(partida.horaFim)}',
+                      style: GoogleFonts.dmSans(
+                        color: AppColors.gray,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    Text(
+                      '${partida.quantidade_atual}/${partida.vagas} jogadores',
+                      style: GoogleFonts.dmSans(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    Text(
+                      '$vagasDisponiveis vaga(s) restante(s)',
+                      style: GoogleFonts.dmSans(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    if (souDono) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: Icon(
+                                partida.tipo == TipoPartida.ABERTA
+                                    ? Icons.lock
+                                    : Icons.lock_open,
+                              ),
+                              label: Text(
+                                partida.tipo == TipoPartida.ABERTA
+                                    ? 'Fechar'
+                                    : 'Abrir',
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: partida.tipo == TipoPartida.ABERTA
+                                    ? Colors.red
+                                    : Colors.green,
+                                side: BorderSide(
+                                  color: partida.tipo == TipoPartida.ABERTA
+                                      ? Colors.red
+                                      : Colors.green,
+                                  width: 1.5,
+                                ),
+                              ),
+                              onPressed: () => _abrirFecharPartida(
+                                partida.id,
+                                partida.tipo == TipoPartida.ABERTA,
+                              ),
+                            )
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.cancel),
+                              label: const Text('Cancelar'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                              ),
+                              onPressed: () =>
+                                  _cancelarPartida(partida.id),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (!souDono) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.logout),
+                              label: const Text('Sair da Partida'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.dark,
+                                side: const BorderSide(
+                                  color: AppColors.dark,
+                                  width: 1.5,
+                                ),
+                              ),
+                              onPressed: () => _sairDaPartida(
+                                partida.id,
+                              ),
+                            )
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
+            )
           );
         },
       ),

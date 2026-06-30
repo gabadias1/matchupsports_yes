@@ -25,6 +25,7 @@ class _ChatReservaScreenState extends State<ChatReservaScreen> {
   final ScrollController _scrollController =
       ScrollController();
   final ChatService _chatService = ChatService();
+  final FocusNode _messageFocusNode = FocusNode();
   bool _isLoading = true;
   List<MensagemChat> _messages = [];
   int? usuarioAtualId;
@@ -47,9 +48,9 @@ class _ChatReservaScreenState extends State<ChatReservaScreen> {
 
   @override
   void dispose() {
-    _timer?.cancel();
-    _scrollController.dispose();
     _messageController.dispose();
+    _scrollController.dispose();
+    _messageFocusNode.dispose();
     super.dispose();
   }
 
@@ -217,6 +218,7 @@ Future<void> _enviarMensagem() async {
           SnackBar(
             content:
               Text("Erro ao enviar mensagem: $e"),
+            backgroundColor: AppColors.error,
           ),
         );
   }
@@ -243,13 +245,6 @@ Future<void> _enviarMensagem() async {
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 17,
-              ),
-            ),
-            Text(
-              "Reserva #${widget.reservaId}",
-              style: GoogleFonts.dmSans(
-                color: Colors.white70,
-                fontSize: 12,
               ),
             ),
           ],
@@ -380,29 +375,32 @@ Future<void> _enviarMensagem() async {
         children: [
           Expanded(
             child: TextField(
-              controller:
-                _messageController,
-              decoration:
-                InputDecoration(
-                  hintText:
-                    "Digite uma mensagem...",
-                  hintStyle:
-                    GoogleFonts.dmSans(
-                      color:
-                        AppColors.gray,
-                    ),
-                  filled:true,
-                  fillColor:
-                    AppColors.grayLight
-                      .withOpacity(.3),
-                  border:
-                    OutlineInputBorder(
-                      borderRadius:
-                        BorderRadius.circular(14),
-                      borderSide:
-                        BorderSide.none,
-                    ),
+              controller: _messageController,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) async {
+                await _enviarMensagem();
+                // mantém o campo ativo após enviar
+                Future.delayed(
+                  const Duration(milliseconds: 100),
+                  () {
+                    if (mounted) {
+                      _messageFocusNode.requestFocus();
+                    }
+                  },
+                );
+              },
+              decoration: InputDecoration(
+                hintText: "Digite uma mensagem...",
+                hintStyle: GoogleFonts.dmSans(
+                  color: AppColors.gray,
                 ),
+                filled: true,
+                fillColor: AppColors.grayLight.withOpacity(.3),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
             ),
           ),
           const SizedBox(
