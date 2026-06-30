@@ -49,6 +49,7 @@ class _ChatReservaScreenState extends State<ChatReservaScreen> {
   @override
   void dispose() {
     _messageController.dispose();
+    _timer?.cancel();
     _scrollController.dispose();
     _messageFocusNode.dispose();
     super.dispose();
