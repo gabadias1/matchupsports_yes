@@ -4,9 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:match_up_sports/models/estabelecimento.dart';
 import 'package:match_up_sports/services/estabelecimento_service.dart';
 import 'package:match_up_sports/services/quadra_service.dart';
-import 'package:match_up_sports/services/estabelecimento_service.dart';
 import 'package:match_up_sports/theme/app_theme.dart';
-import 'package:match_up_sports/models/estabelecimento.dart';
 
 class CriarQuadraScreen extends StatefulWidget {
   const CriarQuadraScreen({super.key});
@@ -23,12 +21,9 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
   final estabelecimentoService = EstabelecimentoService();
   List<EstabelecimentoModel> estabelecimentos = [];
   bool _loadingEstabelecimentos = true;
-  int? _estabelecimentoSelecionado;
 
   String? _selectedEsporte;
   bool _isLoading = false;
-  bool _isLoadingEstabelecimentos = true;
-  List<EstabelecimentoModel> _estabelecimentos = [];
   EstabelecimentoModel? _estabelecimentoSelecionado;
 
   final List<Map<String, String>> _esportes = [
@@ -36,12 +31,6 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
     {'nome': 'Vôlei', 'emoji': '🏐'},
     {'nome': 'Basquete', 'emoji': '🏀'},
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _carregarEstabelecimentos();
-  }
 
   @override
   void dispose() {
@@ -122,7 +111,7 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
       final quadra = await QuadraService.createQuadra(
         identificacao: _identificacaoController.text,
         descricao: _descricaoController.text,
-        estabelecimentoId: _estabelecimentoSelecionado!,
+        estabelecimentoId: _estabelecimentoSelecionado!.id,
         esporte: _selectedEsporte!,
         valorHora: double.parse(_valorHoraController.text),
       );
@@ -372,53 +361,39 @@ class _CriarQuadraScreenState extends State<CriarQuadraScreen> {
                     ? const Center(
                         child: CircularProgressIndicator(),
                       )
-                    : DropdownButtonFormField<int>(
-                        initialValue: _estabelecimentoSelecionado,
-
-                        decoration: InputDecoration(
-                          hintText: 'Selecione um estabelecimento',
-                          hintStyle: GoogleFonts.dmSans(
-                            color: AppColors.grayLight,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                              color: AppColors.grayLight,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-
-                        items: estabelecimentos.map((estabelecimento) {
-                          return DropdownMenuItem<int>(
-                            value: estabelecimento.id,
-                            child: Text(
-                              estabelecimento.nomeLocal,
-                              style: GoogleFonts.dmSans(
-                                color: AppColors.dark,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-
-                        onChanged: (value) {
-                          setState(() {
-                            _estabelecimentoSelecionado = value;
-                          });
-                        },
-
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Selecione um estabelecimento';
-                          }
-                          return null;
-                        },
+                    :                   DropdownButtonFormField<EstabelecimentoModel>(
+                    initialValue: _estabelecimentoSelecionado,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.grayLight),
                       ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    items: estabelecimentos.map((estabelecimento) {
+                      return DropdownMenuItem<EstabelecimentoModel>(
+                        value: estabelecimento,
+                        child: Text(
+                          '${estabelecimento.nomeLocal} — ${estabelecimento.endereco}',
+                          style: GoogleFonts.dmSans(color: AppColors.dark),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() => _estabelecimentoSelecionado = value);
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Selecione um estabelecimento';
+                      }
+                      return null;
+                    },
+                  ),
                 const SizedBox(height: 20),
 
                 // Campo: Valor por Hora

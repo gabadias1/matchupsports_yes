@@ -73,7 +73,7 @@ class _HomeOwnerScreenState extends State<HomeOwnerScreen> {
               onRefresh: _loadQuadras,
             ),
             const _ReservasOwnerTab(),
-            _PerfilOwnerTab(),
+            const SizedBox.shrink(),
           ],
         ),
       ),
@@ -657,7 +657,6 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
                                     color: AppColors.dark,
                                   ),
                                 ),
-                              ),
                               const SizedBox(height: 2),
                               Text(
                                 'Usuário: ${reserva.nomeJogador}',
@@ -722,21 +721,6 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
                                           ? AppColors.secondary
                                           : AppColors.dark,
                             ),
-                            child: Text(
-                              reserva.status == 'CONFIRMADA'
-                                  ? 'Confirmada'
-                                  : reserva.status == 'CANCELADA'
-                                      ? 'Cancelada'
-                                      : 'Pendente',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: reserva.status == 'CONFIRMADA'
-                                    ? AppColors.primary
-                                    : reserva.status == 'CANCELADA'
-                                        ? AppColors.error
-                                        : AppColors.secondary,
-                              ),
                             ),
                           ),
                         ],
