@@ -714,7 +714,7 @@ class _ReservasOwnerTabState extends State<_ReservasOwnerTab> {
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: reserva.status == 'CONFIRMADA'
-                                  ? AppColors.primaryLight
+                                  ? AppColors.primaryDark
                                   : reserva.status == 'CANCELADA'
                                       ? AppColors.error
                                       : reserva.status == 'PENDENTE'

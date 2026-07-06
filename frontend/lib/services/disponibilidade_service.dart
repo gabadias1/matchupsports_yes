@@ -38,7 +38,7 @@ class DisponibilidadeService {
     try {
       final token = await _authService.getToken();
       _dio.options.headers['Authorization'] = 'Bearer $token';
-      final response = await _dio.get('quadra/$quadraId');
+      final response = await _dio.get('/quadra/$quadraId');
       final List<dynamic> data = response.data is List ? response.data : [];
       return data.map((json) => Disponibilidade.fromJson(json)).toList();
     } on DioException catch (e) {
