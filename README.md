@@ -65,14 +65,21 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mydb
 PORT=3000
 ```
 
+---
+
+
 ### Instale as dependências:
 
+
+
 ##BACK
-*npm install
-*sudo docker compose up -d
-*npx prisma db push
+
+**npm install
+**sudo docker compose up -d
+**npx prisma db push
 
 ##FRONT
+
 *flutter pub get
 
 ##Executar Back
